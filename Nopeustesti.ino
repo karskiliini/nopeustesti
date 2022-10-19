@@ -11,6 +11,10 @@
 const float PRESS_INTERVAL_MS = 200;
 const int TIME_AFTER_ERROR = 2500;
 
+// values updated in isr
+volatile float press_guard = 0;
+volatile int pressed = 0;
+
 float delay_ms;
 const int BUF_LEN = 10;
 int buffer[BUF_LEN];
@@ -18,9 +22,7 @@ int buffer_r;
 int buffer_w;
 int enabled = 0;
 int quit = 0;
-float press_guard = 0;
-
-volatile int pressed = 0;
+int quit_blink = 25;
 float target_time = 0;
 
 // lights
@@ -73,6 +75,7 @@ void reset()
   buffer_w = 0;
   enabled = 0;
   quit = 0;
+  quit_blink = 25;
   pressed = 0;
   press_guard = millis() + PRESS_INTERVAL_MS;
 
@@ -118,15 +121,11 @@ int register_press(int color)
     // nothing in queue, error
     if (buffer_w == buffer_r)
     {
-      Serial.print("game state: register_press error queue empty -1.\n");
+      Serial.print("game state: register_press error queue empty, index: ");
       Serial.print(buffer_r);
       Serial.print("\n");
       return -1;
     }
-
-    Serial.print("game state: register_press done: index ");
-    Serial.print(buffer_r);
-    Serial.print("\n");
 
     int c = buffer[buffer_r];
     ++buffer_r;
@@ -139,7 +138,6 @@ int register_press(int color)
     if (c != color)
     {
       Serial.print("game state: register_press error, wrong color.\n");
-
       return -1;
     }
 
@@ -156,28 +154,8 @@ int queue_color(int color)
       return -1;
     }
 
-    Serial.print("game state: queue_color done: index ");
-    Serial.print(buffer_w);
-    Serial.print("\n");
-
     buffer[buffer_w] = color;
     ++buffer_w;
-
-    switch(color)
-    {
-      case RED_LIGHT_PIN:
-    Serial.print("queue_color added color RED\n");
-        break;
-      case BLUE_LIGHT_PIN:
-    Serial.print("queue_color added color BLUE\n");
-        break;
-      case GREEN_LIGHT_PIN:
-    Serial.print("queue_color added color GREEN\n");
-        break;
-      case YELLOW_LIGHT_PIN:
-    Serial.print("queue_color added color YELLOW\n");
-        break;
-    }
 
     if (buffer_w >= BUF_LEN) {
       buffer_w = 0; 
@@ -188,45 +166,41 @@ int queue_color(int color)
 
 void isr_green()
 {
-  if (press_guard > millis())
+  unsigned long ms = millis();
+  if (press_guard > ms)
     return;
 
-  press_guard = millis() + PRESS_INTERVAL_MS;
-
-  Serial.print("isr green\n");
+  press_guard = ms + PRESS_INTERVAL_MS;
   pressed = GREEN_LIGHT_PIN;
 }
 
 void isr_yellow()
 {
-  if (press_guard > millis())
+  unsigned long ms = millis();
+  if (press_guard > ms)
     return;
 
-  press_guard = millis() + PRESS_INTERVAL_MS;
-
-  Serial.print("isr yellow\n");
+  press_guard = ms + PRESS_INTERVAL_MS;
   pressed = YELLOW_LIGHT_PIN;
 }
 
 void isr_blue()
 {
-  if (press_guard > millis())
+  unsigned long ms = millis();
+  if (press_guard > ms)
     return;
 
-  press_guard = millis() + PRESS_INTERVAL_MS;
-
-  Serial.print("isr blue\n");
+  press_guard = ms + PRESS_INTERVAL_MS;
   pressed = BLUE_LIGHT_PIN;
 }
 
 void isr_red()
 {
-  if (press_guard > millis())
+  unsigned long ms = millis();
+  if (press_guard > ms)
     return;
 
-  press_guard = millis() + PRESS_INTERVAL_MS;
-
-  Serial.print("isr red\n");
+  press_guard = ms + PRESS_INTERVAL_MS;
   pressed = RED_LIGHT_PIN;
 }
 
@@ -239,14 +213,15 @@ void handleQuitState()
       {
         all_lights_off();
         enabled = 0;
-      } else {
+      } else if (quit_blink) {
         all_lights_on();
         enabled = 1;
+        --quit_blink;
       }
     }
     if (pressed)
     {
-      Serial.print("quit state: press registered, start game.\n");
+      Serial.print("Start a new game!\n");
       reset();
     }
 }
@@ -263,7 +238,6 @@ void loop() {
 
   if (pressed)
   {
-        Serial.print("game state: press detected.\n");
     err = register_press(pressed);
     if (err)
       quit = 1;
@@ -276,19 +250,12 @@ void loop() {
   {
     if (enabled)
     {
-      // Serial.print("game state: turn off lights.\n");
-
       delay_ms = 0.95f * delay_ms;
 
-      light_off(GREEN_LIGHT_PIN);
-      light_off(YELLOW_LIGHT_PIN);
-      light_off(BLUE_LIGHT_PIN);
-      light_off(RED_LIGHT_PIN);
+      all_lights_off();
       enabled = 0;
       target_time = millis() + delay_ms;
     } else {
-      // Serial.print("game state: turn on light.\n");
-
       int color = rand() % 4;
       color = index_to_color[color];
 
@@ -310,13 +277,7 @@ void loop() {
     press_guard = millis() + TIME_AFTER_ERROR;
 
     target_time = millis() + TIME_AFTER_ERROR;
-    light_on(GREEN_LIGHT_PIN);
-    light_on(YELLOW_LIGHT_PIN);
-    light_on(BLUE_LIGHT_PIN);
-    light_on(RED_LIGHT_PIN);
+    all_lights_on();
     return;
   }
-
-  float now = millis();
-  float shutoff = now + delay_ms;
 }
