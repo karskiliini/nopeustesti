@@ -30,13 +30,15 @@ void displayScore()
 }
 
 void turnOnDisplay() {
-  tm.set(2);
+  tm.set(BRIGHT_TYPICAL);
   tm.display(dispData);
+  tm.start();
 }
 
 void turnOffDisplay()
 {
   tm.clearDisplay();
+  tm.stop();
 }
 
 const float PRESS_INTERVAL_MS = 200;
@@ -119,7 +121,7 @@ void setup() {
 
   tm.init();
   // set brightness; 0-7
-  tm.set(2);
+  tm.set(BRIGHT_TYPICAL);
   tm.display(dispData);
 
   reset();
