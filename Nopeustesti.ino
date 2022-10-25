@@ -8,6 +8,27 @@
  *
  */
 
+// install Grove 4-digit display by Seeed library
+// https://github.com/Seeed-Studio/Grove_4Digital_Display/blob/master/TM1637.h
+#include <TM1637.h>
+
+int CLK = 9;
+int DIO = 10;
+
+TM1637 tm(CLK,DIO);
+int8_t dispData[] = { 0, 0, 0, 0 };
+int score = 0;
+
+void displayScore()
+{
+  dispData[3] = score % 10;
+  dispData[2] = (score / 10) % 10;
+  dispData[1] = (score / 100) % 10;
+  dispData[0] = (score / 1000) % 10;
+
+  tm.display(dispData);
+}
+
 const float PRESS_INTERVAL_MS = 200;
 const int TIME_AFTER_ERROR = 2500;
 
@@ -85,7 +106,12 @@ void reset()
 }
 
 void setup() {
-  
+
+  tm.init();
+  // set brightness; 0-7
+  tm.set(2);
+  tm.display(dispData);
+
   reset();
   
   index_to_color[0] = GREEN_LIGHT_PIN;
@@ -140,6 +166,8 @@ int register_press(int color)
       Serial.print("game state: register_press error, wrong color.\n");
       return -1;
     }
+
+    ++score;
 
     return 0;
 }
@@ -222,6 +250,8 @@ void handleQuitState()
     if (pressed)
     {
       Serial.print("Start a new game!\n");
+      score = 0;
+      displayScore();
       reset();
     }
 }
@@ -241,7 +271,8 @@ void loop() {
     err = register_press(pressed);
     if (err)
       quit = 1;
-    
+
+    displayScore();
     light_off(pressed);
     pressed = 0;
   }
