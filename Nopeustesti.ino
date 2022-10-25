@@ -29,6 +29,16 @@ void displayScore()
   tm.display(dispData);
 }
 
+void turnOnDisplay() {
+  tm.set(2);
+  tm.display(dispData);
+}
+
+void turnOffDisplay()
+{
+  tm.clearDisplay();
+}
+
 const float PRESS_INTERVAL_MS = 200;
 const int TIME_AFTER_ERROR = 2500;
 
@@ -239,9 +249,12 @@ void handleQuitState()
       target_time = millis() + 400;
       if (enabled)
       {
+        turnOffDisplay();
         all_lights_off();
         enabled = 0;
       } else if (quit_blink) {
+        turnOnDisplay();
+        displayScore();
         all_lights_on();
         enabled = 1;
         --quit_blink;
@@ -251,6 +264,7 @@ void handleQuitState()
     {
       Serial.print("Start a new game!\n");
       score = 0;
+      turnOnDisplay();
       displayScore();
       reset();
     }
