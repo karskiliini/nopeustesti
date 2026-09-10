@@ -17,7 +17,7 @@
  *    LAMP TEST   boot: each lamp lights while the display shows its pin
  *    WIRING TEST hold any button at power-up: buttons echo to their lamps
  *    ATTRACT     fading lamp animations with pauses, last and best score
- *    COUNTDOWN   3-2-1 after any button press
+ *    COUNTDOWN   after a press: all lamps flash, fade out, random silence
  *    PLAYING     the game
  *    GAME OVER   flash, show score, back to ATTRACT
  */
@@ -377,7 +377,7 @@ static void startGame(uint32_t now) {
     litUntil[i] = now;
   }
   interval = START_INTERVAL_MS;
-  nextLightAt = now + START_INTERVAL_MS;
+  nextLightAt = now;            // the start sequence already made us wait
   newBest = false;
   played = true;
   setAllLights(false);
@@ -386,27 +386,37 @@ static void startGame(uint32_t now) {
   enterPhase(Phase::Playing, now);
 }
 
+// Start sequence: every lamp snaps on, holds, fades to dark, then a random
+// silence so the first light cannot be anticipated.
 static void runCountdown(uint32_t now) {
-  static int8_t shownStep = -1;
+  static uint16_t waitMs = 0;
+  static uint8_t shownLevel = 0;
   if (freshPhase()) {
-    shownStep = -1;
-    display.on();   // may have been asleep
+    display.on();               // may have been asleep
+    display.showNumber(0);
+    setAllLights(true);
+    shownLevel = 255;
+    waitMs = random(START_WAIT_MIN_MS, START_WAIT_MAX_MS + 1);
+    beep(660, 60);
   }
 
-  const uint8_t step = sincePhase(now) / COUNTDOWN_STEP_MS;   // 0,1,2 -> 3,2,1
-  if (step >= 3) {
-    beep(880, 120);
+  const uint32_t t = sincePhase(now);
+  uint8_t level;
+  if (t < START_FLASH_MS) {
+    level = 255;
+  } else if (t < START_FLASH_MS + START_FADE_MS) {
+    const uint32_t f = t - START_FLASH_MS;
+    const uint8_t lin = 255 - f * 255 / START_FADE_MS;
+    level = (uint16_t)lin * lin / 255;              // gamma: looks like a linear fade
+  } else if (t < START_FLASH_MS + START_FADE_MS + waitMs) {
+    level = 0;
+  } else {
     startGame(now);
     return;
   }
-  if (step != shownStep) {
-    shownStep = step;
-    char text[5];
-    snprintf(text, sizeof(text), "  %d ", 3 - step);
-    display.showText(text);
-    // Lamps count down too: 3 lit, then 2, then 1.
-    for (uint8_t i = 0; i < NUM_CHANNELS; i++) setLight(i, i < (uint8_t)(3 - step));
-    beep(660, 60);
+  if (level != shownLevel) {
+    shownLevel = level;
+    for (uint8_t i = 0; i < NUM_CHANNELS; i++) setLampLevel(i, level);
   }
 }
 

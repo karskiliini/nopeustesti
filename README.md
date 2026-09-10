@@ -74,7 +74,8 @@ Three ways, pick any:
   the tell that no game is running: in play lamps only snap on and off. The display alternates the last score with `bESt` and the
   stored high score. Press any button to start. After two idle minutes
   everything goes dark; a press wakes it and starts a game.
-* **Countdown**: `3`, `2`, `1` with the lamps counting down, then go.
+* **Start**: on the press every lamp snaps on for half a second, fades to
+  dark, and after a random 0.5–2.5 s silence the first light comes.
 * **Playing**: the display shows the running score. Each lamp lights for
   60 % of the current interval and then goes dark on its own; the press is
   still owed, so if you fall behind you play from memory. Pressing turns the
