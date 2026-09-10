@@ -36,8 +36,8 @@ static Button buttons[NUM_CHANNELS];
 static TM1637Display display(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
 
 // Lamp levels 0..255 after the per-lamp brightness from config.h. Pins
-// with hardware PWM use analogWrite; the rest get a software PWM that
-// serviceLamps() bit-bangs from loop() (period ~4 ms, 256 steps).
+// with hardware PWM use analogWrite; a lamp on a plain digital pin is
+// simply on when the level is at least half, off below that.
 static uint8_t lampLevel[NUM_CHANNELS];     // after brightness scaling
 static uint8_t lampRequest[NUM_CHANNELS];   // as asked, 0..255
 
@@ -54,16 +54,8 @@ static void setLampLevel(uint8_t ch, uint8_t level) {
     writeLampPin(ch, level == 255);
   } else if (digitalPinHasPWM(pin)) {
     analogWrite(pin, LIGHT_ACTIVE_HIGH ? level : 255 - level);
-  }
-  // otherwise serviceLamps() takes over
-}
-
-static void serviceLamps() {
-  const uint8_t phase = (uint8_t)(micros() >> 4);   // 0..255 every 4096 us
-  for (uint8_t ch = 0; ch < NUM_CHANNELS; ch++) {
-    const uint8_t level = lampLevel[ch];
-    if (level == 0 || level == 255 || digitalPinHasPWM(CHANNELS[ch].lightPin)) continue;
-    writeLampPin(ch, phase < level);
+  } else {
+    writeLampPin(ch, level >= 128);
   }
 }
 
@@ -589,7 +581,6 @@ static void serialGreeting() {
 
 void loop() {
   const uint32_t now = millis();
-  serviceLamps();
   serialGreeting();
 
   if (phase == Phase::WiringTest) { runWiringTest(now); return; }

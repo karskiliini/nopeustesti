@@ -47,21 +47,23 @@ struct Channel {
 //   ┌────────┬───────────┬────────────┐
 //   │ name   │ light pin │ button pin │
 //   ├────────┼───────────┼────────────┤
-// Lamp and button pins measured 10.9.2026 with tools/pintest.
+// Lamp and button pins measured 10.9.2026 with tools/pintest; red lamp and
+// blue button were then swapped (7 <-> 11) so every lamp is on a PWM pin.
 //
 // Brightness balances the colours: 255 = full. Green and yellow LEDs look
 // much brighter than red and blue at the same current, so dim those two.
-// A lamp on a non-PWM pin (red on 7) is dimmed with software PWM, which
-// flickers slightly only while the display is being written.
+// All four lamps are on PWM pins. A lamp on a plain digital pin cannot be
+// dimmed or faded: it is on at levels 128 and up and off below, so its
+// brightness value should then be 255.
 //
 //   ┌────────┬───────────┬────────────┬────────────┐
 //   │ name   │ light pin │ button pin │ brightness │
 //   ├────────┼───────────┼────────────┼────────────┤
 static const Channel CHANNELS[] = {
     { "GREEN",  6,          2,           110 },
-    { "BLUE",   5,          11,          255 },
+    { "BLUE",   5,          7,           255 },
     { "YELLOW", 13,         1,           170 },
-    { "RED",    7,          0,           255 },
+    { "RED",    11,         0,           255 },
 };
 //   └────────┴───────────┴────────────┴────────────┘
 static const uint8_t NUM_CHANNELS = sizeof(CHANNELS) / sizeof(CHANNELS[0]);

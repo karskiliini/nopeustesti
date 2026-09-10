@@ -19,9 +19,9 @@ upload, or from the command line with arduino-cli installed:
 | colour  | light pin | button pin |
 |---------|-----------|------------|
 | GREEN   | 6         | 2          |
-| BLUE    | 5         | 11         |
+| BLUE    | 5         | 7          |
 | YELLOW  | 13        | 1          |
-| RED     | 7         | 0          |
+| RED     | 11        | 0          |
 | display | CLK 9, DIO 10 (TM1637 / Grove 4-Digit Display) | |
 | buzzer  | none by default; set `BUZZER_PIN` to a pin to enable | |
 
@@ -112,6 +112,7 @@ different player speeds.
 * `display.h` – 60-line TM1637 driver (digits, a small letter font,
   brightness, on/off).
 * `animations.h` – idle lamp animations as pure time → lamp-level functions.
-  Lamps on PWM pins fade in hardware, others with a software PWM.
+  Lamps on PWM pins fade in hardware; a lamp on a plain digital pin just
+  switches on and off.
 * `flash.sh` – compile + upload + serial monitor via arduino-cli.
 * `tools/` – pin-test sketch and serial helper for mapping a rewired device.
