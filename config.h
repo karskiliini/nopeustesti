@@ -1,74 +1,94 @@
 /**
- *  NOPEUSTESTI - hardware pin map and game tuning.
+ *  NOPEUSTESTI - wiring and game tuning. The only file you need to edit.
  *
- *  This is the only file you should need to touch when wiring the game
- *  or adjusting how hard it is.
+ *  ==========================================================================
+ *  WIRING: everything about how the real device is connected is in the
+ *  "Wiring" section right below. Whatever way the wires ended up, fix it
+ *  here and nowhere else:
+ *
+ *    - a button lights the wrong lamp      -> edit the CHANNELS table
+ *    - lamps are in a different order      -> reorder the CHANNELS rows
+ *    - buttons wired to 5V instead of GND  -> BUTTON_ACTIVE_LOW / pull-up
+ *    - lamps switch on with LOW            -> LIGHT_ACTIVE_HIGH
+ *    - display or buzzer on other pins     -> DISPLAY_*_PIN, BUZZER_PIN
+ *    - 3 or 5 lamps instead of 4           -> add/remove CHANNELS rows
+ *
+ *  To check the result without a serial monitor: hold any button while
+ *  powering up. In that WIRING TEST mode every button lights its own lamp
+ *  while held and the display shows the button's pin number. The boot lamp
+ *  test also lights each lamp while showing its pin, and the serial
+ *  monitor (115200 baud) prints the whole table at boot.
+ *  ==========================================================================
  *
  *  Board: Arduino Leonardo (any AVR board works, no interrupt pins needed).
- *
- *  ┌────────┬───────────┬────────────┐
- *  │ colour │ light pin │ button pin │
- *  ├────────┼───────────┼────────────┤
- *  │ GREEN  │ 6         │ 0          │
- *  │ YELLOW │ 13        │ 1          │
- *  │ RED    │ 12        │ 2          │
- *  │ BLUE   │ 7         │ 3          │
- *  ├────────┼───────────┴────────────┤
- *  │ display│ CLK 9, DIO 10 (TM1637) │
- *  │ buzzer │ 4 (optional)           │
- *  └────────┴────────────────────────┘
- *
- *  Buttons: one leg to the pin, other leg to GND (internal pull-up is used).
- *  Lights:  pin -> resistor -> LED -> GND (or a transistor for bigger lamps).
- *
- *  The same table is printed to the serial monitor (115200 baud) at boot,
- *  and the boot lamp test lights each lamp while the display shows its pin.
- *  Hold any button while powering up to enter WIRING TEST mode: every
- *  button lights its own lamp while held and the display shows the
- *  button's pin number.
  */
 #pragma once
 
 #include <Arduino.h>
 
 // ---------------------------------------------------------------------------
-// Pin map
+// Wiring
 // ---------------------------------------------------------------------------
 
 struct Channel {
-  const char *name;
-  uint8_t lightPin;
-  uint8_t buttonPin;
+  const char *name;    // shown on the serial monitor only
+  uint8_t lightPin;    // Arduino pin driving this lamp
+  uint8_t buttonPin;   // Arduino pin reading this lamp's button
 };
 
-// Order here is only cosmetic (lamp test / attract chase run in this order).
+// One row per lamp+button pair. A row ties a lamp to the button that is
+// physically under it, so if lamp "RED" is on pin 12 and the button below it
+// reads on pin 3, the row is { "RED", 12, 3 }. Row order is the physical
+// left-to-right order on the panel; it is used for the lamp test, the
+// attract chase and the countdown, never for the game logic.
+//
+//   ┌────────┬───────────┬────────────┐
+//   │ name   │ light pin │ button pin │
+//   ├────────┼───────────┼────────────┤
 static const Channel CHANNELS[] = {
-  { "GREEN",  6,  0 },
-  { "YELLOW", 13, 1 },
-  { "RED",    12, 2 },
-  { "BLUE",   7,  3 },
+    { "GREEN",  6,          0 },
+    { "YELLOW", 13,         1 },
+    { "RED",    12,         2 },
+    { "BLUE",   7,          3 },
 };
+//   └────────┴───────────┴────────────┘
 static const uint8_t NUM_CHANNELS = sizeof(CHANNELS) / sizeof(CHANNELS[0]);
 
+// Buttons. Default: one leg on the pin, other leg on GND, internal pull-up.
+//   BUTTON_ACTIVE_LOW  true  = pressed reads LOW  (wired to GND)
+//                      false = pressed reads HIGH (wired to 5V, needs an
+//                              external pull-down resistor to GND)
+//   BUTTON_USE_PULLUP  enable the chip's internal pull-up. Leave true for
+//                      GND-wired buttons; set false if you use your own
+//                      external resistors.
+static const bool BUTTON_ACTIVE_LOW = true;
+static const bool BUTTON_USE_PULLUP = true;
+
+// Lamps. Default: pin -> resistor -> LED -> GND, i.e. HIGH = on.
+// Set false if a lamp lights when the pin goes LOW (PNP transistor,
+// low-active relay board, LED wired to 5V).
+static const bool LIGHT_ACTIVE_HIGH = true;
+
+// TM1637 4-digit display (Grove 4-Digit Display or bare module).
 static const uint8_t DISPLAY_CLK_PIN = 9;
 static const uint8_t DISPLAY_DIO_PIN = 10;
 
-// Set to -1 if you have no buzzer.
+// Buzzer. Set BUZZER_PIN to -1 if there is none.
+//   BUZZER_PASSIVE true  = passive piezo/speaker, driven with tones
+//                  false = active buzzer module that just needs power
+//                          (one fixed pitch, driven on/off)
 static const int8_t BUZZER_PIN = 4;
-
-// Lights are active HIGH by default. Flip this if you drive the lamps
-// through PNP transistors / relays that switch on with a LOW.
-static const bool LIGHT_ACTIVE_HIGH = true;
+static const bool BUZZER_PASSIVE = true;
 
 // ---------------------------------------------------------------------------
 // Button debounce
 // ---------------------------------------------------------------------------
 
-// A press is accepted after this many consecutive 1 ms samples read LOW.
+// A press is accepted after this many consecutive 1 ms samples read "pressed".
 // 2 samples = ~2 ms latency and immune to single-sample glitches.
 static const uint8_t PRESS_CONFIRM_SAMPLES = 2;
 
-// A button counts as released only after it has read HIGH continuously for
+// A button counts as released only after it has read "released" continuously for
 // this long. This swallows release bounce completely, so holding a button
 // and letting go never produces a phantom press.
 static const uint16_t RELEASE_STABLE_MS = 30;

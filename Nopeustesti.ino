@@ -41,8 +41,11 @@ static void setAllLights(bool on) {
   for (uint8_t i = 0; i < NUM_CHANNELS; i++) setLight(i, on);
 }
 
+// Passive buzzer: play the tone. Active buzzer: switch on for the duration
+// (pitch is ignored); tone() is still used so it turns itself off.
 static void beep(uint16_t hz, uint16_t ms) {
-  if (BUZZER_PIN >= 0) tone(BUZZER_PIN, hz, ms);
+  if (BUZZER_PIN < 0) return;
+  tone(BUZZER_PIN, BUZZER_PASSIVE ? hz : 4000, ms);
 }
 
 // ---------------------------------------------------------------------------
@@ -135,7 +138,17 @@ static void printPinMap() {
   Serial.print(F(", DIO "));
   Serial.println(DISPLAY_DIO_PIN);
   Serial.print(F("  buzzer   "));
-  if (BUZZER_PIN >= 0) Serial.println(BUZZER_PIN); else Serial.println(F("none"));
+  if (BUZZER_PIN >= 0) {
+    Serial.print(BUZZER_PIN);
+    Serial.println(BUZZER_PASSIVE ? F(" (passive)") : F(" (active)"));
+  } else {
+    Serial.println(F("none"));
+  }
+  Serial.print(F("  buttons  pressed = "));
+  Serial.print(BUTTON_ACTIVE_LOW ? F("LOW") : F("HIGH"));
+  Serial.println(BUTTON_USE_PULLUP ? F(", internal pull-up") : F(", no pull-up"));
+  Serial.print(F("  lamps    on = "));
+  Serial.println(LIGHT_ACTIVE_HIGH ? F("HIGH") : F("LOW"));
   Serial.print(F("  best score "));
   Serial.println(best);
   Serial.println(F("Hold any button at power-up for wiring test mode."));

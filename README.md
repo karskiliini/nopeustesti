@@ -22,10 +22,26 @@ No libraries to install. Open `Nopeustesti.ino` in the Arduino IDE (or use
 | buzzer  | 4 (optional, set `BUZZER_PIN` to -1 if absent) | |
 
 Buttons go between the pin and GND; the internal pull-up is used. Lights go
-pin → resistor → LED → GND, or through a transistor for real lamps (set
-`LIGHT_ACTIVE_HIGH` to false for PNP/relay boards that switch on with LOW).
+pin → resistor → LED → GND, or through a transistor for real lamps.
 
-Everything about pins and difficulty lives in `config.h`.
+### Wired it differently? Fix it in `config.h` only
+
+The "Wiring" section at the top of `config.h` describes the real device.
+Whatever way the wires ended up, adjust it there and nothing else changes:
+
+| Symptom / situation                         | Change                              |
+|---------------------------------------------|-------------------------------------|
+| a button lights the wrong lamp              | edit the pins in the `CHANNELS` row |
+| lamps sit in a different order on the panel | reorder the `CHANNELS` rows         |
+| 3 or 5 lamps instead of 4                   | add or remove `CHANNELS` rows       |
+| buttons wired to 5V with pull-downs         | `BUTTON_ACTIVE_LOW = false`, `BUTTON_USE_PULLUP = false` |
+| lamps switch on with LOW (PNP, relay board) | `LIGHT_ACTIVE_HIGH = false`         |
+| display on other pins                       | `DISPLAY_CLK_PIN`, `DISPLAY_DIO_PIN`|
+| no buzzer / active buzzer module            | `BUZZER_PIN = -1` / `BUZZER_PASSIVE = false` |
+
+Each `CHANNELS` row ties one lamp to the button under it: `{ "RED", 12, 3 }`
+means the red lamp is on pin 12 and its button reads on pin 3. Then use the
+wiring test mode below to confirm.
 
 ### Finding out which button is which
 
@@ -69,7 +85,8 @@ different player speeds.
 
 * `Nopeustesti.ino` – game state machine (boot, wiring test, attract,
   countdown, playing, game over).
-* `config.h` – pin map and every tunable constant.
+* `config.h` – wiring (pins, polarities, buzzer type) and every tunable
+  constant.
 * `buttons.h` – polled, bounce-proof button. A press fires on the first
   couple of low samples; release needs 30 ms of stable high, so contact
   bounce never creates a phantom press. No interrupts, no shared lockout.
