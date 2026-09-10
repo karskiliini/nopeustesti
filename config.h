@@ -7,6 +7,7 @@
  *  here and nowhere else:
  *
  *    - a button lights the wrong lamp      -> edit the CHANNELS table
+ *    - one colour glares, another is dim   -> brightness column in CHANNELS
  *    - lamps are in a different order      -> reorder the CHANNELS rows
  *    - buttons wired to 5V instead of GND  -> BUTTON_ACTIVE_LOW / pull-up
  *    - lamps switch on with LOW            -> LIGHT_ACTIVE_HIGH
@@ -34,6 +35,7 @@ struct Channel {
   const char *name;    // shown on the serial monitor only
   uint8_t lightPin;    // Arduino pin driving this lamp
   uint8_t buttonPin;   // Arduino pin reading this lamp's button
+  uint8_t brightness;  // 0..255, only on PWM pins (Leonardo: 3 5 6 9 10 11 13)
 };
 
 // One row per lamp+button pair. A row ties a lamp to the button that is
@@ -45,15 +47,23 @@ struct Channel {
 //   ┌────────┬───────────┬────────────┐
 //   │ name   │ light pin │ button pin │
 //   ├────────┼───────────┼────────────┤
-// Lamp pins measured 10.9.2026 with tools/pintest. Button pins are still
-// the old defaults: no button reached any pin yet (see docs/kytkenta.md).
+// Lamp and button pins measured 10.9.2026 with tools/pintest.
+//
+// Brightness balances the colours: 255 = full. Green and yellow LEDs look
+// much brighter than red and blue at the same current, so dim those two.
+// A lamp on a non-PWM pin (red on 7) is always full on. Note: dimming the
+// lamp on pin 5 does not work together with a buzzer, both use Timer 3.
+//
+//   ┌────────┬───────────┬────────────┬────────────┐
+//   │ name   │ light pin │ button pin │ brightness │
+//   ├────────┼───────────┼────────────┼────────────┤
 static const Channel CHANNELS[] = {
-    { "GREEN",  6,          0 },
-    { "BLUE",   5,          1 },
-    { "YELLOW", 13,         2 },
-    { "RED",    7,          3 },
+    { "GREEN",  6,          2,           110 },
+    { "BLUE",   5,          11,          255 },
+    { "YELLOW", 13,         1,           170 },
+    { "RED",    7,          0,           255 },
 };
-//   └────────┴───────────┴────────────┘
+//   └────────┴───────────┴────────────┴────────────┘
 static const uint8_t NUM_CHANNELS = sizeof(CHANNELS) / sizeof(CHANNELS[0]);
 
 // Buttons. Default: one leg on the pin, other leg on GND, internal pull-up.

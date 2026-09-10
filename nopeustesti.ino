@@ -34,8 +34,16 @@
 static Button buttons[NUM_CHANNELS];
 static TM1637Display display(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
 
+// Full brightness uses digitalWrite so non-PWM pins and the buzzer's timer
+// are untouched; anything below 255 goes through analogWrite (PWM).
 static void setLight(uint8_t ch, bool on) {
-  digitalWrite(CHANNELS[ch].lightPin, (on == LIGHT_ACTIVE_HIGH) ? HIGH : LOW);
+  const uint8_t pin = CHANNELS[ch].lightPin;
+  const uint8_t level = CHANNELS[ch].brightness;
+  if (!on || level == 255) {
+    digitalWrite(pin, (on == LIGHT_ACTIVE_HIGH) ? HIGH : LOW);
+  } else {
+    analogWrite(pin, LIGHT_ACTIVE_HIGH ? level : 255 - level);
+  }
 }
 
 static void setAllLights(bool on) {

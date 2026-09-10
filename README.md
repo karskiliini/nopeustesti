@@ -18,10 +18,10 @@ upload, or from the command line with arduino-cli installed:
 
 | colour  | light pin | button pin |
 |---------|-----------|------------|
-| GREEN   | 6         | 0          |
-| BLUE    | 5         | 1          |
-| YELLOW  | 13        | 2          |
-| RED     | 7         | 3          |
+| GREEN   | 6         | 2          |
+| BLUE    | 5         | 11         |
+| YELLOW  | 13        | 1          |
+| RED     | 7         | 0          |
 | display | CLK 9, DIO 10 (TM1637 / Grove 4-Digit Display) | |
 | buzzer  | 4 (optional, set `BUZZER_PIN` to -1 if absent) | |
 

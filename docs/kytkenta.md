@@ -32,16 +32,15 @@ merkinnät valettu kytkimen kylkeen) ja lamppu (liittimet + ja −).
 
 | paikka | lamppu    | lamppu + | nappi NO | tila 10.9.2026                   |
 |--------|-----------|----------|----------|----------------------------------|
-| 1.     | vihreä    | D6       | D0 ?     | lamppu ok, nappi ei näy          |
-| 2.     | sininen   | D5       | D1 ?     | lamppu ok, nappi ei näy          |
-| 3.     | keltainen | D13      | D2 ?     | lamppu ok, nappi ei näy          |
-| 4.     | punainen  | D7       | D3 ?     | lamppu ok, nappi ei näy          |
+| 1.     | vihreä    | D6       | D2       | mitattu 10.9.2026                |
+| 2.     | sininen   | D5       | D11      | mitattu 10.9.2026                |
+| 3.     | keltainen | D13      | D1       | mitattu 10.9.2026                |
+| 4.     | punainen  | D7       | D0       | mitattu 10.9.2026                |
 | näyttö | TM1637    | CLK D9, DIO D10, VCC 5V, GND |   |                    |
 | summeri| passiivinen | D4 / GND |        | valinnainen                      |
 
-Yhdeksän johtoa Arduinoon: 4 nappia, 4 lamppua, 1 maa. Kysymysmerkillä
-merkityt ovat config.h:n oletuksia, ei vielä mitattuja. Lampun pinnit on
-mitattu 10.9.2026.
+Yhdeksän johtoa Arduinoon: 4 nappia, 4 lamppua, 1 maa. Kaikki pinnit on
+mitattu 10.9.2026. Nappien vika oli irti ollut maajohto.
 
 Mikrokytkimen merkinnät (kuvattu 10.9.2026): COM1 alareunassa, NO3
 oikealla alhaalla (musta hyppyjohto lamppuun), NC2 oikealla ylhäällä,
