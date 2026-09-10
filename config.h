@@ -148,7 +148,8 @@ static const uint16_t LIGHT_ON_MIN_MS = 60;
 // ---------------------------------------------------------------------------
 
 static const uint16_t LAMP_TEST_STEP_MS = 350;   // boot lamp test, per lamp
-static const uint16_t START_FLASH_MS = 500;      // all lamps on after the press
+static const uint16_t START_RISE_MS = 600;       // lamps rise to full after the press
+static const uint16_t START_FLASH_MS = 500;      // hold at full
 static const uint16_t START_FADE_MS = 700;       // then fade to dark
 static const uint16_t START_WAIT_MIN_MS = 500;   // dark pause before the first
 static const uint16_t START_WAIT_MAX_MS = 2500;  // light, random in this range

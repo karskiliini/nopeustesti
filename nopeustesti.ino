@@ -38,7 +38,8 @@ static TM1637Display display(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
 // Lamp levels 0..255 after the per-lamp brightness from config.h. Pins
 // with hardware PWM use analogWrite; the rest get a software PWM that
 // serviceLamps() bit-bangs from loop() (period ~4 ms, 256 steps).
-static uint8_t lampLevel[NUM_CHANNELS];
+static uint8_t lampLevel[NUM_CHANNELS];     // after brightness scaling
+static uint8_t lampRequest[NUM_CHANNELS];   // as asked, 0..255
 
 static void writeLampPin(uint8_t ch, bool on) {
   digitalWrite(CHANNELS[ch].lightPin, (on == LIGHT_ACTIVE_HIGH) ? HIGH : LOW);
@@ -46,6 +47,7 @@ static void writeLampPin(uint8_t ch, bool on) {
 
 static void setLampLevel(uint8_t ch, uint8_t level) {
   const uint8_t pin = CHANNELS[ch].lightPin;
+  lampRequest[ch] = level;
   level = (uint16_t)level * CHANNELS[ch].brightness / 255;
   lampLevel[ch] = level;
   if (level == 0 || level == 255) {
@@ -289,7 +291,7 @@ static void runWiringTest(uint32_t now) {
 
 static void showLevels(const uint8_t levels[]) {
   for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
-    if (levels[i] != lampLevel[i]) setLampLevel(i, levels[i]);
+    if (levels[i] != lampRequest[i]) setLampLevel(i, levels[i]);
   }
 }
 
@@ -386,38 +388,40 @@ static void startGame(uint32_t now) {
   enterPhase(Phase::Playing, now);
 }
 
-// Start sequence: every lamp snaps on, holds, fades to dark, then a random
-// silence so the first light cannot be anticipated.
+// Start sequence: every lamp rises from wherever the attract show left it
+// to full, holds, fades to dark, then a random silence so the first light
+// cannot be anticipated.
 static void runCountdown(uint32_t now) {
   static uint16_t waitMs = 0;
-  static uint8_t shownLevel = 0;
+  static uint8_t from[NUM_CHANNELS];
   if (freshPhase()) {
     display.on();               // may have been asleep
     display.showNumber(0);
-    setAllLights(true);
-    shownLevel = 255;
+    for (uint8_t i = 0; i < NUM_CHANNELS; i++) from[i] = lampRequest[i];
     waitMs = random(START_WAIT_MIN_MS, START_WAIT_MAX_MS + 1);
     beep(660, 60);
   }
 
   const uint32_t t = sincePhase(now);
-  uint8_t level;
-  if (t < START_FLASH_MS) {
-    level = 255;
-  } else if (t < START_FLASH_MS + START_FADE_MS) {
-    const uint32_t f = t - START_FLASH_MS;
+  uint8_t levels[NUM_CHANNELS];
+  if (t < START_RISE_MS) {
+    const uint8_t f = ease(t * 255 / START_RISE_MS);
+    for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
+      levels[i] = from[i] + (uint16_t)(255 - from[i]) * f / 255;
+    }
+  } else if (t < START_RISE_MS + START_FLASH_MS) {
+    for (uint8_t i = 0; i < NUM_CHANNELS; i++) levels[i] = 255;
+  } else if (t < START_RISE_MS + START_FLASH_MS + START_FADE_MS) {
+    const uint32_t f = t - START_RISE_MS - START_FLASH_MS;
     const uint8_t lin = 255 - f * 255 / START_FADE_MS;
-    level = (uint16_t)lin * lin / 255;              // gamma: looks like a linear fade
-  } else if (t < START_FLASH_MS + START_FADE_MS + waitMs) {
-    level = 0;
+    for (uint8_t i = 0; i < NUM_CHANNELS; i++) levels[i] = gammaLevel(lin);
+  } else if (t < START_RISE_MS + START_FLASH_MS + START_FADE_MS + waitMs) {
+    for (uint8_t i = 0; i < NUM_CHANNELS; i++) levels[i] = 0;
   } else {
     startGame(now);
     return;
   }
-  if (level != shownLevel) {
-    shownLevel = level;
-    for (uint8_t i = 0; i < NUM_CHANNELS; i++) setLampLevel(i, level);
-  }
+  showLevels(levels);
 }
 
 // ---------------------------------------------------------------------------
