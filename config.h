@@ -134,9 +134,12 @@ static const uint16_t MIN_INTERVAL_MS = 120;
 // light would exceed this, the player was too slow and the game ends.
 static const uint8_t MAX_PENDING = 5;
 
-// When the same colour comes again while its lamp is still lit, the lamp
-// blinks off for this long so the repeat is visible.
-static const uint16_t RETRIGGER_GAP_MS = 70;
+// A lamp stays lit for this share of the current interval, then goes dark
+// whether or not it was pressed; the press is still owed. 100 would keep
+// each lamp lit right up to the next one, smaller values leave a visible
+// gap and make repeats of the same colour blink.
+static const uint8_t LIGHT_ON_PERCENT = 60;
+static const uint16_t LIGHT_ON_MIN_MS = 60;
 
 // ---------------------------------------------------------------------------
 // Presentation timing

@@ -74,9 +74,10 @@ Three ways, pick any:
   stored high score. Press any button to start. After two idle minutes
   everything goes dark; a press wakes it and starts a game.
 * **Countdown**: `3`, `2`, `1` with the lamps counting down, then go.
-* **Playing**: the display shows the running score. A lamp stays lit until
-  its button is pressed. If the same colour comes twice it blinks off briefly
-  so you can see the repeat.
+* **Playing**: the display shows the running score. Each lamp lights for
+  60 % of the current interval and then goes dark on its own; the press is
+  still owed, so if you fall behind you play from memory. Pressing turns the
+  lamp off immediately.
 * **Game over**: on a wrong button, the lamp you should have pressed blinks
   for 1.5 s. On a too-early or too-slow loss all lamps blink. Then the score
   blinks. A new high score lights all lamps and pings on each blink. The
@@ -89,7 +90,9 @@ In `config.h`:
 * `START_INTERVAL_MS` (900): time between the first lights.
 * `SPEEDUP_FACTOR` (0.985): each light multiplies the interval by this.
 * `MIN_INTERVAL_MS` (120): the interval never goes below this.
-* `MAX_PENDING` (5): how many lit-but-unpressed lamps you may fall behind.
+* `MAX_PENDING` (5): how many unpressed lamps you may fall behind.
+* `LIGHT_ON_PERCENT` (60): how long each lamp stays lit, as a share of the
+  interval.
 
 The comment above `SPEEDUP_FACTOR` has a table of simulated scores for
 different player speeds.

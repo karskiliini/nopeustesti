@@ -3,9 +3,10 @@
  *
  *  The classic Finnish reaction game: four lights, four buttons, one
  *  4-digit display. Lights come on in random order, faster and faster.
- *  Press the buttons in the same order the lights came on. One wrong
- *  press, one press too early, or falling more than MAX_PENDING lights
- *  behind ends the game. Score = number of correct presses.
+ *  Each light stays on only briefly; press the buttons in the same order
+ *  the lights came on, from memory if you fall behind. One wrong press,
+ *  one press too early, or falling more than MAX_PENDING lights behind
+ *  ends the game. Score = number of correct presses.
  *
  *  (C) Tero Maaranen 2022-2026. GPL-3.0, see LICENSE.
  *
@@ -104,7 +105,7 @@ static uint8_t queue[MAX_PENDING];
 static uint8_t qHead = 0;
 static uint8_t qCount = 0;
 static uint8_t pending[NUM_CHANNELS];     // per colour count in the queue
-static uint32_t lampOffUntil[NUM_CHANNELS]; // retrigger blink
+static uint32_t litUntil[NUM_CHANNELS];   // lamp goes dark at this time
 static float interval = START_INTERVAL_MS;
 static uint32_t nextLightAt = 0;
 
@@ -349,7 +350,7 @@ static void startGame(uint32_t now) {
   qCount = 0;
   for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
     pending[i] = 0;
-    lampOffUntil[i] = now;
+    litUntil[i] = now;
   }
   interval = START_INTERVAL_MS;
   nextLightAt = now + START_INTERVAL_MS;
@@ -434,7 +435,7 @@ static void loseGame(LossReason reason, uint8_t pressed, uint8_t expected, uint3
 
 static void refreshLamps(uint32_t now) {
   for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
-    setLight(i, pending[i] > 0 && reached(now, lampOffUntil[i]));
+    setLight(i, pending[i] > 0 && !reached(now, litUntil[i]));
   }
 }
 
@@ -456,7 +457,7 @@ static void runPlaying(uint32_t now) {
     }
     qHead = (qHead + 1) % MAX_PENDING;
     qCount--;
-    pending[i]--;
+    if (--pending[i] == 0) litUntil[i] = now;   // lamp off on the press
     score++;
     display.showNumber(score);
     Serial.print(F("ok "));
@@ -472,12 +473,13 @@ static void runPlaying(uint32_t now) {
     const uint8_t colour = random(NUM_CHANNELS);
     queue[(qHead + qCount) % MAX_PENDING] = colour;
     qCount++;
-    if (pending[colour]++ > 0) {
-      lampOffUntil[colour] = now + RETRIGGER_GAP_MS;   // blink to show repeat
-    }
+    pending[colour]++;
     interval *= SPEEDUP_FACTOR;
     if (interval < MIN_INTERVAL_MS) interval = MIN_INTERVAL_MS;
     nextLightAt = now + (uint32_t)interval;
+    uint32_t onMs = (uint32_t)interval * LIGHT_ON_PERCENT / 100;
+    if (onMs < LIGHT_ON_MIN_MS) onMs = LIGHT_ON_MIN_MS;
+    litUntil[colour] = now + onMs;
   }
 
   refreshLamps(now);
