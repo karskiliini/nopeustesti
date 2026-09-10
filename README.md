@@ -57,7 +57,8 @@ drives which lamp and which pin each button reaches, one pin at a time. See
 
 Three ways, pick any:
 
-1. **Serial monitor** at 115200 baud prints the full pin map at boot.
+1. **Serial monitor** at 115200 baud prints the full pin map whenever the
+   monitor is opened, plus every phase change and correct press.
 2. **Boot lamp test**: each lamp lights in turn while the display shows its
    pin number (`L  6`, `L 13`, …).
 3. **Wiring test mode**: hold any button while powering up. Now every button
@@ -67,9 +68,11 @@ Three ways, pick any:
 
 ## Playing
 
-* **Attract**: lamps chase slowly, the display alternates the last score with
-  `bESt` and the stored high score. Press any button to start. After two idle
-  minutes everything goes dark; a press wakes it and starts a game.
+* **Attract**: the lamps run a show: KITT scanner, fill bar, outside-in
+  pulse, sparkle, heartbeat, each followed by a dark pause (`animations.h`,
+  easy to extend). The display alternates the last score with `bESt` and the
+  stored high score. Press any button to start. After two idle minutes
+  everything goes dark; a press wakes it and starts a game.
 * **Countdown**: `3`, `2`, `1` with the lamps counting down, then go.
 * **Playing**: the display shows the running score. A lamp stays lit until
   its button is pressed. If the same colour comes twice it blinks off briefly
@@ -102,5 +105,6 @@ different player speeds.
   bounce never creates a phantom press. No interrupts, no shared lockout.
 * `display.h` – 60-line TM1637 driver (digits, a small letter font,
   brightness, on/off).
+* `animations.h` – idle lamp animations as pure time → lamp-mask functions.
 * `flash.sh` – compile + upload + serial monitor via arduino-cli.
 * `tools/` – pin-test sketch and serial helper for mapping a rewired device.

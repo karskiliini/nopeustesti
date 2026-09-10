@@ -15,7 +15,7 @@
  *  Phases:
  *    LAMP TEST   boot: each lamp lights while the display shows its pin
  *    WIRING TEST hold any button at power-up: buttons echo to their lamps
- *    ATTRACT     idle chase, shows last score and best score, sleeps later
+ *    ATTRACT     lamp animations with pauses, shows last and best score
  *    COUNTDOWN   3-2-1 after any button press
  *    PLAYING     the game
  *    GAME OVER   flash, show score, back to ATTRACT
@@ -25,6 +25,7 @@
 #include "config.h"
 #include "buttons.h"
 #include "display.h"
+#include "animations.h"
 
 // ---------------------------------------------------------------------------
 // Hardware
@@ -78,6 +79,7 @@ enum class LossReason : uint8_t { WrongButton, TooEarly, TooSlow };
 // Explicit prototypes: the Arduino builder's generated ones would land
 // above the enums and fail to compile.
 static void enterPhase(Phase p, uint32_t now);
+static const char *phaseName(Phase p);
 static void loseGame(LossReason reason, uint8_t pressed, uint8_t expected, uint32_t now);
 
 static Phase phase = Phase::Attract;
@@ -105,10 +107,23 @@ static uint8_t lossExpected = 0;
 static inline uint32_t sincePhase(uint32_t now) { return now - phaseStart; }
 static inline bool reached(uint32_t now, uint32_t t) { return (int32_t)(now - t) >= 0; }
 
+static const char *phaseName(Phase p) {
+  switch (p) {
+    case Phase::WiringTest: return "WIRING TEST";
+    case Phase::Attract:    return "ATTRACT";
+    case Phase::Countdown:  return "COUNTDOWN";
+    case Phase::Playing:    return "PLAYING";
+    case Phase::GameOver:   return "GAME OVER";
+  }
+  return "?";
+}
+
 static void enterPhase(Phase p, uint32_t now) {
   phase = p;
   phaseStart = now;
   phaseFresh = true;
+  Serial.print(F("phase: "));
+  Serial.println(phaseName(p));
 }
 
 // Returns true exactly once after each enterPhase().
@@ -243,16 +258,27 @@ static void runWiringTest(uint32_t now) {
 // Attract
 // ---------------------------------------------------------------------------
 
+static void setLampMask(uint8_t mask, bool force = false) {
+  static uint8_t shown = 0xFF;
+  if (mask == shown && !force) return;
+  shown = mask;
+  for (uint8_t i = 0; i < NUM_CHANNELS; i++) setLight(i, mask & (1u << i));
+}
+
 static void runAttract(uint32_t now, bool anyPress) {
-  static uint8_t chaseIndex = 0;
-  static uint32_t chaseAt = 0;
+  static uint8_t animIndex = 0;
+  static uint32_t animStart = 0;
+  static bool pausing = false;
   static int8_t shownScreen = -1;
   static bool asleep = false;
 
   if (freshPhase()) {
-    chaseAt = now;
+    animIndex = 0;
+    animStart = now;
+    pausing = true;               // short dark pause before the first show
     shownScreen = -1;
     asleep = false;
+    setLampMask(0, true);         // other phases drive lamps directly
     display.on();
   }
 
@@ -263,18 +289,27 @@ static void runAttract(uint32_t now, bool anyPress) {
 
   if (!asleep && sincePhase(now) >= ATTRACT_SLEEP_MS) {
     asleep = true;
-    setAllLights(false);
+    setLampMask(0);
     display.off();
     Serial.println(F("idle: sleeping"));
     return;
   }
   if (asleep) return;
 
-  // Slow chase around the lamps.
-  if (reached(now, chaseAt)) {
-    chaseAt = now + ATTRACT_CHASE_MS;
-    for (uint8_t i = 0; i < NUM_CHANNELS; i++) setLight(i, i == chaseIndex);
-    chaseIndex = (chaseIndex + 1) % NUM_CHANNELS;
+  // Animation show: one animation, a dark pause, the next, ... and loop.
+  const uint32_t at = now - animStart;
+  if (pausing) {
+    if (at >= ATTRACT_PAUSE_MS) {
+      pausing = false;
+      animStart = now;
+    }
+  } else if (at >= ANIMATIONS[animIndex].durationMs) {
+    pausing = true;
+    animStart = now;
+    animIndex = (animIndex + 1) % NUM_ANIMATIONS;
+    setLampMask(0);
+  } else {
+    setLampMask(ANIMATIONS[animIndex].frame(at));
   }
 
   // Display cycle: last score -> "bESt" -> best score -> ...
@@ -416,6 +451,8 @@ static void runPlaying(uint32_t now) {
     pending[i]--;
     score++;
     display.showNumber(score);
+    Serial.print(F("ok "));
+    Serial.println(CHANNELS[i].name);
   }
 
   // Next light
@@ -489,8 +526,22 @@ static void runGameOver(uint32_t now, bool anyPress) {
 // Main loop
 // ---------------------------------------------------------------------------
 
+// Leonardo's USB serial has no boot-time output for a monitor opened later,
+// so repeat the pin map whenever a monitor connects.
+static void serialGreeting() {
+  static bool wasOpen = false;
+  const bool open = (bool)Serial;
+  if (open && !wasOpen) {
+    printPinMap();
+    Serial.print(F("phase: "));
+    Serial.println(phaseName(phase));
+  }
+  wasOpen = open;
+}
+
 void loop() {
   const uint32_t now = millis();
+  serialGreeting();
 
   if (phase == Phase::WiringTest) { runWiringTest(now); return; }
   if (phase == Phase::Playing)    { runPlaying(now);    return; }
