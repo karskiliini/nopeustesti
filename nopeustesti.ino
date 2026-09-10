@@ -549,9 +549,9 @@ static void runPlaying(uint32_t now) {
 // ---------------------------------------------------------------------------
 
 static void runGameOver(uint32_t now, bool anyPress) {
-  static int8_t shownBlink = -1;
+  static int8_t shownBreath = -1;
   static bool lampsOn = false;
-  if (freshPhase()) { shownBlink = -1; lampsOn = false; }
+  if (freshPhase()) { shownBreath = -1; lampsOn = false; }
 
   const uint32_t t = sincePhase(now);
 
@@ -571,24 +571,29 @@ static void runGameOver(uint32_t now, bool anyPress) {
     return;
   }
 
-  // Blink the score; a new best gets a rising ping on every blink.
-  const int8_t blink = (t - GAME_OVER_LOCKOUT_MS) / GAME_OVER_BLINK_MS;
-  if (blink != shownBlink) {
-    shownBlink = blink;
-    const bool visible = blink % 2 == 0;
-    if (visible) display.showNumber(score); else display.clear();
-    setAllLights(visible && newBest);
-    if (visible && newBest) beep(1319, 40);
+  // Show the score while every lamp breathes up and down a few times; a
+  // new best gets a rising ping at the start of each breath. Then hand
+  // over to the attract show, whose own dark pause comes first.
+  const uint32_t bt = t - GAME_OVER_LOCKOUT_MS;
+  const int8_t breath = bt / GAME_OVER_BREATHE_MS;
+  if (breath != shownBreath) {
+    shownBreath = breath;
+    if (breath == 0) display.showNumber(score);
+    if (newBest) beep(1319, 40);
   }
 
   if (anyPress) {
     enterPhase(Phase::Countdown, now);
     return;
   }
-  if (blink >= GAME_OVER_BLINKS * 2) {
-    display.showNumber(score);
+  if (breath >= GAME_OVER_BREATHS) {
     enterPhase(Phase::Attract, now);
+    return;
   }
+  uint8_t levels[NUM_CHANNELS];
+  const uint8_t v = gammaLevel(ease(tri(bt, GAME_OVER_BREATHE_MS)));
+  for (uint8_t i = 0; i < NUM_CHANNELS; i++) levels[i] = v;
+  showLevels(levels);
 }
 
 // ---------------------------------------------------------------------------

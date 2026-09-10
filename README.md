@@ -89,8 +89,9 @@ Three ways, pick any:
   lamp off immediately.
 * **Game over**: on a wrong button, the lamp you should have pressed blinks
   for 1.5 s. On a too-early or too-slow loss all lamps blink. Then the score
-  blinks. A new high score lights all lamps and pings on each blink. The
-  high score survives power cycles (EEPROM).
+  comes up and all lamps breathe up and down four times; a new high score
+  pings on every breath. After a second of dark the attract show resumes.
+  The high score survives power cycles (EEPROM).
 
 ## Tuning difficulty
 
