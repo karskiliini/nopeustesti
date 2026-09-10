@@ -7,8 +7,12 @@ in the order the lights came on. One wrong press, a press when nothing is
 lit, or falling five lights behind ends the game. Score is the number of
 correct presses. A good player tops out around 80–120.
 
-No libraries to install. Open `Nopeustesti.ino` in the Arduino IDE (or use
-`arduino-cli compile --fqbn arduino:avr:leonardo`) and upload.
+No libraries to install. Open `nopeustesti.ino` in the Arduino IDE and
+upload, or from the command line with arduino-cli installed:
+
+```
+./flash.sh          # compile, upload, open serial monitor
+```
 
 ## Wiring
 
@@ -83,7 +87,7 @@ different player speeds.
 
 ## Files
 
-* `Nopeustesti.ino` – game state machine (boot, wiring test, attract,
+* `nopeustesti.ino` – game state machine (boot, wiring test, attract,
   countdown, playing, game over).
 * `config.h` – wiring (pins, polarities, buzzer type) and every tunable
   constant.
@@ -92,3 +96,4 @@ different player speeds.
   bounce never creates a phantom press. No interrupts, no shared lockout.
 * `display.h` – 60-line TM1637 driver (digits, a small letter font,
   brightness, on/off).
+* `flash.sh` – compile + upload + serial monitor via arduino-cli.
