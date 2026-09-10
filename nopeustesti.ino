@@ -16,7 +16,7 @@
  *  Phases:
  *    LAMP TEST   boot: each lamp lights while the display shows its pin
  *    WIRING TEST hold any button at power-up: buttons echo to their lamps
- *    ATTRACT     lamp animations with pauses, shows last and best score
+ *    ATTRACT     fading lamp animations with pauses, last and best score
  *    COUNTDOWN   3-2-1 after any button press
  *    PLAYING     the game
  *    GAME OVER   flash, show score, back to ATTRACT
@@ -35,17 +35,37 @@
 static Button buttons[NUM_CHANNELS];
 static TM1637Display display(DISPLAY_CLK_PIN, DISPLAY_DIO_PIN);
 
-// Full brightness uses digitalWrite so non-PWM pins and the buzzer's timer
-// are untouched; anything below 255 goes through analogWrite (PWM).
-static void setLight(uint8_t ch, bool on) {
+// Lamp levels 0..255 after the per-lamp brightness from config.h. Pins
+// with hardware PWM use analogWrite; the rest get a software PWM that
+// serviceLamps() bit-bangs from loop() (period ~4 ms, 256 steps).
+static uint8_t lampLevel[NUM_CHANNELS];
+
+static void writeLampPin(uint8_t ch, bool on) {
+  digitalWrite(CHANNELS[ch].lightPin, (on == LIGHT_ACTIVE_HIGH) ? HIGH : LOW);
+}
+
+static void setLampLevel(uint8_t ch, uint8_t level) {
   const uint8_t pin = CHANNELS[ch].lightPin;
-  const uint8_t level = CHANNELS[ch].brightness;
-  if (!on || level == 255) {
-    digitalWrite(pin, (on == LIGHT_ACTIVE_HIGH) ? HIGH : LOW);
-  } else {
+  level = (uint16_t)level * CHANNELS[ch].brightness / 255;
+  lampLevel[ch] = level;
+  if (level == 0 || level == 255) {
+    writeLampPin(ch, level == 255);
+  } else if (digitalPinHasPWM(pin)) {
     analogWrite(pin, LIGHT_ACTIVE_HIGH ? level : 255 - level);
   }
+  // otherwise serviceLamps() takes over
 }
+
+static void serviceLamps() {
+  const uint8_t phase = (uint8_t)(micros() >> 4);   // 0..255 every 4096 us
+  for (uint8_t ch = 0; ch < NUM_CHANNELS; ch++) {
+    const uint8_t level = lampLevel[ch];
+    if (level == 0 || level == 255 || digitalPinHasPWM(CHANNELS[ch].lightPin)) continue;
+    writeLampPin(ch, phase < level);
+  }
+}
+
+static void setLight(uint8_t ch, bool on) { setLampLevel(ch, on ? 255 : 0); }
 
 static void setAllLights(bool on) {
   for (uint8_t i = 0; i < NUM_CHANNELS; i++) setLight(i, on);
@@ -267,16 +287,16 @@ static void runWiringTest(uint32_t now) {
 // Attract
 // ---------------------------------------------------------------------------
 
-static void setLampMask(uint8_t mask, bool force = false) {
-  static uint8_t shown = 0xFF;
-  if (mask == shown && !force) return;
-  shown = mask;
-  for (uint8_t i = 0; i < NUM_CHANNELS; i++) setLight(i, mask & (1u << i));
+static void showLevels(const uint8_t levels[]) {
+  for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
+    if (levels[i] != lampLevel[i]) setLampLevel(i, levels[i]);
+  }
 }
 
 static void runAttract(uint32_t now, bool anyPress) {
   static uint8_t animIndex = 0;
   static uint32_t animStart = 0;
+  static uint32_t lastFrame = 0;
   static bool pausing = false;
   static int8_t shownScreen = -1;
   static bool asleep = false;
@@ -284,10 +304,11 @@ static void runAttract(uint32_t now, bool anyPress) {
   if (freshPhase()) {
     animIndex = 0;
     animStart = now;
+    lastFrame = 0;
     pausing = true;               // short dark pause before the first show
     shownScreen = -1;
     asleep = false;
-    setLampMask(0, true);         // other phases drive lamps directly
+    setAllLights(false);
     display.on();
   }
 
@@ -298,7 +319,7 @@ static void runAttract(uint32_t now, bool anyPress) {
 
   if (!asleep && sincePhase(now) >= ATTRACT_SLEEP_MS) {
     asleep = true;
-    setLampMask(0);
+    setAllLights(false);
     display.off();
     Serial.println(F("idle: sleeping"));
     return;
@@ -316,9 +337,12 @@ static void runAttract(uint32_t now, bool anyPress) {
     pausing = true;
     animStart = now;
     animIndex = (animIndex + 1) % NUM_ANIMATIONS;
-    setLampMask(0);
-  } else {
-    setLampMask(ANIMATIONS[animIndex].frame(at));
+    setAllLights(false);
+  } else if (now - lastFrame >= 8) {   // ~120 frames/s is plenty
+    lastFrame = now;
+    uint8_t levels[NUM_CHANNELS];
+    ANIMATIONS[animIndex].frame(at, levels);
+    showLevels(levels);
   }
 
   // Display cycle: last score -> "bESt" -> best score -> ...
@@ -551,6 +575,7 @@ static void serialGreeting() {
 
 void loop() {
   const uint32_t now = millis();
+  serviceLamps();
   serialGreeting();
 
   if (phase == Phase::WiringTest) { runWiringTest(now); return; }

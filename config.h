@@ -51,8 +51,8 @@ struct Channel {
 //
 // Brightness balances the colours: 255 = full. Green and yellow LEDs look
 // much brighter than red and blue at the same current, so dim those two.
-// A lamp on a non-PWM pin (red on 7) is always full on. Note: dimming the
-// lamp on pin 5 does not work together with a buzzer, both use Timer 3.
+// A lamp on a non-PWM pin (red on 7) is dimmed with software PWM, which
+// flickers slightly only while the display is being written.
 //
 //   ┌────────┬───────────┬────────────┬────────────┐
 //   │ name   │ light pin │ button pin │ brightness │
@@ -85,11 +85,13 @@ static const bool LIGHT_ACTIVE_HIGH = true;
 static const uint8_t DISPLAY_CLK_PIN = 9;
 static const uint8_t DISPLAY_DIO_PIN = 10;
 
-// Buzzer. Set BUZZER_PIN to -1 if there is none.
+// Buzzer. Set BUZZER_PIN to -1 if there is none (the default: this device
+// has no buzzer, and tone() shares Timer 3 with PWM on pin 5, so a buzzer
+// would break the blue lamp's fades).
 //   BUZZER_PASSIVE true  = passive piezo/speaker, driven with tones
 //                  false = active buzzer module that just needs power
 //                          (one fixed pitch, driven on/off)
-static const int8_t BUZZER_PIN = 4;
+static const int8_t BUZZER_PIN = -1;
 static const bool BUZZER_PASSIVE = true;
 
 // ---------------------------------------------------------------------------
@@ -150,11 +152,12 @@ static const uint16_t COUNTDOWN_STEP_MS = 450;   // 3-2-1 before a game
 static const uint16_t GAME_OVER_LOCKOUT_MS = 1500; // ignore presses after loss
 static const uint16_t GAME_OVER_BLINK_MS = 350;  // score blink period
 static const uint8_t  GAME_OVER_BLINKS = 8;
-static const uint16_t ATTRACT_PAUSE_MS = 2500;   // dark gap between animations
-static const uint16_t ANIM_KITT_STEP_MS = 110;   // KITT scanner, per lamp
-static const uint16_t ANIM_FILL_STEP_MS = 160;   // fill bar, per lamp
-static const uint16_t ANIM_PULSE_STEP_MS = 220;  // outside-in pulse, per ring
-static const uint16_t ANIM_SPARKLE_STEP_MS = 90; // random sparkle, per pattern
+static const uint16_t ATTRACT_PAUSE_MS = 1000;   // dark gap between animations
+static const uint16_t ANIM_KITT_SWEEP_MS = 1500;   // KITT: one full left-right-left
+static const uint16_t ANIM_FILL_SWEEP_MS = 2500;   // fill bar: empty-full-empty
+static const uint16_t ANIM_PULSE_PERIOD_MS = 1100; // outside-in: one breath
+static const uint16_t ANIM_SPARKLE_STEP_MS = 260;  // sparkle: fade time per target
+static const uint16_t ANIM_BREATHE_PERIOD_MS = 2400;
 static const uint16_t ATTRACT_SHOW_SCORE_MS = 3000;
 static const uint16_t ATTRACT_SHOW_BEST_MS = 2000;
 static const uint32_t ATTRACT_SLEEP_MS = 120000UL; // dark after 2 min idle

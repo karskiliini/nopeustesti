@@ -23,7 +23,7 @@ upload, or from the command line with arduino-cli installed:
 | YELLOW  | 13        | 1          |
 | RED     | 7         | 0          |
 | display | CLK 9, DIO 10 (TM1637 / Grove 4-Digit Display) | |
-| buzzer  | 4 (optional, set `BUZZER_PIN` to -1 if absent) | |
+| buzzer  | none by default; set `BUZZER_PIN` to a pin to enable | |
 
 Buttons go between the pin and GND; the internal pull-up is used. Lights go
 pin → resistor → LED → GND, or through a transistor for real lamps.
@@ -68,9 +68,10 @@ Three ways, pick any:
 
 ## Playing
 
-* **Attract**: the lamps run a show: KITT scanner, fill bar, outside-in
-  pulse, sparkle, heartbeat, each followed by a dark pause (`animations.h`,
-  easy to extend). The display alternates the last score with `bESt` and the
+* **Attract**: the lamps run a show with soft fades: KITT scanner, breathe,
+  fill bar, outside-in pulse, sparkle, heartbeat, each followed by a one
+  second dark pause (`animations.h`, easy to extend). The fades are also
+  the tell that no game is running: in play lamps only snap on and off. The display alternates the last score with `bESt` and the
   stored high score. Press any button to start. After two idle minutes
   everything goes dark; a press wakes it and starts a game.
 * **Countdown**: `3`, `2`, `1` with the lamps counting down, then go.
@@ -108,6 +109,7 @@ different player speeds.
   bounce never creates a phantom press. No interrupts, no shared lockout.
 * `display.h` – 60-line TM1637 driver (digits, a small letter font,
   brightness, on/off).
-* `animations.h` – idle lamp animations as pure time → lamp-mask functions.
+* `animations.h` – idle lamp animations as pure time → lamp-level functions.
+  Lamps on PWM pins fade in hardware, others with a software PWM.
 * `flash.sh` – compile + upload + serial monitor via arduino-cli.
 * `tools/` – pin-test sketch and serial helper for mapping a rewired device.
