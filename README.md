@@ -47,6 +47,12 @@ Each `CHANNELS` row ties one lamp to the button under it: `{ "RED", 12, 3 }`
 means the red lamp is on pin 12 and its button reads on pin 3. Then use the
 wiring test mode below to confirm.
 
+### Mapping a freshly wired device
+
+`tools/` has a pin-test sketch and a serial helper for finding out which pin
+drives which lamp and which pin each button reaches, one pin at a time. See
+`tools/README.md`.
+
 ### Finding out which button is which
 
 Three ways, pick any:
@@ -97,3 +103,4 @@ different player speeds.
 * `display.h` – 60-line TM1637 driver (digits, a small letter font,
   brightness, on/off).
 * `flash.sh` – compile + upload + serial monitor via arduino-cli.
+* `tools/` – pin-test sketch and serial helper for mapping a rewired device.
