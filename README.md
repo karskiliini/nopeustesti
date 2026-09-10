@@ -68,12 +68,18 @@ Three ways, pick any:
 
 ## Playing
 
-* **Attract**: the lamps run a show with soft fades: KITT scanner, cat creep, breathe,
-  fill bar, outside-in pulse, sparkle, heartbeat, each followed by a one
-  second dark pause (`animations.h`, easy to extend). The fades are also
-  the tell that no game is running: in play lamps only snap on and off. The display alternates the last score with `bESt` and the
-  stored high score. Press any button to start. After two idle minutes
-  everything goes dark; a press wakes it and starts a game.
+* **Attract**: the lamps run a show of 22 smooth animations, nothing
+  random: KITT scanner and its wide, pendulum, comet, chase, headlights,
+  crossing and ring variants, cat creep, wave, outside-in and inside-out
+  pulses, breathe, heartbeat, half and odd-even crossfades, fills from the
+  left, the centre and both ends, worm, stack and cascade. Each one fades
+  out into a one second dark pause and the show loops for as long as the
+  device waits (`animations.h`, easy to extend). The fades are also the
+  tell that no game is running: in play lamps only snap on and off. The
+  display alternates the last score with `bESt` and the stored high score.
+  Press any button to start. Set `ATTRACT_SLEEP_MS` in `config.h` to make
+  everything go dark after that much idle time (a press then wakes it and
+  starts a game); the default 0 never sleeps.
 * **Start**: on the press every lamp rises from wherever the show left it
   to full, holds half a second, fades to dark, and after a random 0.5–2.5 s
   silence the first light comes.

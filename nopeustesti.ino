@@ -287,11 +287,19 @@ static void showLevels(const uint8_t levels[]) {
   }
 }
 
+// ATTRACT_SLEEP_MS 0 = never sleep. (Written as "idle + 1 > limit" rather
+// than "idle >= limit" only to keep -Wtype-limits quiet when limit is 0.)
+static bool sleepDue(uint32_t idle) {
+  return ATTRACT_SLEEP_MS != 0 && idle + 1 > ATTRACT_SLEEP_MS;
+}
+
 static void runAttract(uint32_t now, bool anyPress) {
   static uint8_t animIndex = 0;
   static uint32_t animStart = 0;
   static uint32_t lastFrame = 0;
   static bool pausing = false;
+  static bool fading = false;     // animation over, fading the lamps to dark
+  static uint8_t fadeFrom[NUM_CHANNELS];
   static int8_t shownScreen = -1;
   static bool asleep = false;
 
@@ -300,6 +308,7 @@ static void runAttract(uint32_t now, bool anyPress) {
     animStart = now;
     lastFrame = 0;
     pausing = true;               // short dark pause before the first show
+    fading = false;
     shownScreen = -1;
     asleep = false;
     setAllLights(false);
@@ -311,7 +320,7 @@ static void runAttract(uint32_t now, bool anyPress) {
     return;
   }
 
-  if (!asleep && sincePhase(now) >= ATTRACT_SLEEP_MS) {
+  if (!asleep && sleepDue(sincePhase(now))) {
     asleep = true;
     setAllLights(false);
     display.off();
@@ -320,22 +329,42 @@ static void runAttract(uint32_t now, bool anyPress) {
   }
   if (asleep) return;
 
-  // Animation show: one animation, a dark pause, the next, ... and loop.
+  // Animation show: one animation, fade out, a dark pause, the next, ...
+  // and loop for as long as nobody presses a button. The first frames are
+  // faded in and the last levels faded out so every animation starts and
+  // ends softly whatever it was doing.
   const uint32_t at = now - animStart;
   if (pausing) {
     if (at >= ATTRACT_PAUSE_MS) {
       pausing = false;
       animStart = now;
     }
+  } else if (fading) {
+    if (at >= ATTRACT_FADE_MS) {
+      fading = false;
+      pausing = true;
+      animStart = now;
+      setAllLights(false);
+    } else if (now - lastFrame >= 8) {
+      lastFrame = now;
+      const uint8_t f = 255 - ease(at * 255 / ATTRACT_FADE_MS);
+      uint8_t levels[NUM_CHANNELS];
+      for (uint8_t i = 0; i < NUM_CHANNELS; i++) levels[i] = (uint16_t)fadeFrom[i] * f / 255;
+      showLevels(levels);
+    }
   } else if (at >= ANIMATIONS[animIndex].durationMs) {
-    pausing = true;
+    fading = true;
     animStart = now;
+    for (uint8_t i = 0; i < NUM_CHANNELS; i++) fadeFrom[i] = lampRequest[i];
     animIndex = (animIndex + 1) % NUM_ANIMATIONS;
-    setAllLights(false);
   } else if (now - lastFrame >= 8) {   // ~120 frames/s is plenty
     lastFrame = now;
     uint8_t levels[NUM_CHANNELS];
     ANIMATIONS[animIndex].frame(at, levels);
+    if (at < ATTRACT_FADE_MS) {
+      const uint8_t f = ease(at * 255 / ATTRACT_FADE_MS);
+      for (uint8_t i = 0; i < NUM_CHANNELS; i++) levels[i] = (uint16_t)levels[i] * f / 255;
+    }
     showLevels(levels);
   }
 

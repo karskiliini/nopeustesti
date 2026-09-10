@@ -60,7 +60,7 @@ struct Channel {
 //   │ name   │ light pin │ button pin │ brightness │
 //   ├────────┼───────────┼────────────┼────────────┤
 static const Channel CHANNELS[] = {
-    { "GREEN",  6,          2,           110 },
+    { "GREEN",  6,          2,           255 },
     { "BLUE",   5,          7,           255 },
     { "YELLOW", 13,         1,           170 },
     { "RED",    11,         0,           255 },
@@ -159,15 +159,28 @@ static const uint16_t GAME_OVER_LOCKOUT_MS = 1500; // ignore presses after loss
 static const uint16_t GAME_OVER_BLINK_MS = 350;  // score blink period
 static const uint8_t  GAME_OVER_BLINKS = 8;
 static const uint16_t ATTRACT_PAUSE_MS = 1000;   // dark gap between animations
-static const uint16_t ANIM_KITT_SWEEP_MS = 1500;   // KITT: one full left-right-left
-static const uint16_t ANIM_FILL_SWEEP_MS = 2500;   // fill bar: empty-full-empty
-static const uint16_t ANIM_PULSE_PERIOD_MS = 1100; // outside-in: one breath
-static const uint16_t ANIM_SPARKLE_STEP_MS = 260;  // sparkle: fade time per target
-static const uint16_t ANIM_BREATHE_PERIOD_MS = 2400;
-static const uint16_t ANIM_CREEP_SWEEP_MS = 5000;  // cat creep: one pass across
+static const uint16_t ATTRACT_FADE_MS = 400;     // fade in/out at each animation's ends
 static const uint16_t ATTRACT_SHOW_SCORE_MS = 3000;
 static const uint16_t ATTRACT_SHOW_BEST_MS = 2000;
-static const uint32_t ATTRACT_SLEEP_MS = 120000UL; // dark after 2 min idle
+static const uint32_t ATTRACT_SLEEP_MS = 0;      // dark after this much idle, 0 = never
+
+// Attract animation periods (see animations.h for what each one looks like).
+static const uint16_t ANIM_KITT_SWEEP_MS = 1500;      // KITT, wide KITT: one left-right-left
+static const uint16_t ANIM_PENDULUM_PERIOD_MS = 2400; // pendulum: one swing there and back
+static const uint16_t ANIM_COMET_SWEEP_MS = 2600;     // comet, headlights: there and back
+static const uint16_t ANIM_COMET_TAIL_MS = 700;       // comet, chase: tail fade time
+static const uint16_t ANIM_CHASE_PASS_MS = 1300;      // chase: one pass left to right
+static const uint16_t ANIM_CROSSING_PERIOD_MS = 2600; // crossing: out and back
+static const uint16_t ANIM_RING_LAP_MS = 1600;        // ring: one lap
+static const uint16_t ANIM_CREEP_SWEEP_MS = 5000;     // cat creep: one pass across
+static const uint16_t ANIM_WAVE_PERIOD_MS = 2000;     // wave: one swell per lamp
+static const uint16_t ANIM_PULSE_PERIOD_MS = 1100;    // outside-in, inside-out: one breath
+static const uint16_t ANIM_BREATHE_PERIOD_MS = 2400;
+static const uint16_t ANIM_CROSSFADE_PERIOD_MS = 2400; // halves, odd-even: A up, A down + B up
+static const uint16_t ANIM_FILL_SWEEP_MS = 2500;      // fills: empty-full-empty
+static const uint16_t ANIM_WORM_PASS_MS = 2200;       // worm: one crawl across
+static const uint16_t ANIM_STACK_STEP_MS = 450;       // stack: per lamp
+static const uint16_t ANIM_CASCADE_STEP_MS = 350;     // cascade: per lamp
 
 static const uint8_t DISPLAY_BRIGHTNESS = 4;     // 0..7
 
