@@ -158,6 +158,7 @@ static const uint16_t ANIM_FILL_SWEEP_MS = 2500;   // fill bar: empty-full-empty
 static const uint16_t ANIM_PULSE_PERIOD_MS = 1100; // outside-in: one breath
 static const uint16_t ANIM_SPARKLE_STEP_MS = 260;  // sparkle: fade time per target
 static const uint16_t ANIM_BREATHE_PERIOD_MS = 2400;
+static const uint16_t ANIM_CREEP_SWEEP_MS = 5000;  // cat creep: one pass across
 static const uint16_t ATTRACT_SHOW_SCORE_MS = 3000;
 static const uint16_t ATTRACT_SHOW_BEST_MS = 2000;
 static const uint32_t ATTRACT_SLEEP_MS = 120000UL; // dark after 2 min idle

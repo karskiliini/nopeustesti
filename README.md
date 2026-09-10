@@ -68,7 +68,7 @@ Three ways, pick any:
 
 ## Playing
 
-* **Attract**: the lamps run a show with soft fades: KITT scanner, breathe,
+* **Attract**: the lamps run a show with soft fades: KITT scanner, cat creep, breathe,
   fill bar, outside-in pulse, sparkle, heartbeat, each followed by a one
   second dark pause (`animations.h`, easy to extend). The fades are also
   the tell that no game is running: in play lamps only snap on and off. The display alternates the last score with `bESt` and the

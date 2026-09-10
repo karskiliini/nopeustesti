@@ -110,6 +110,21 @@ static void animHeartbeat(uint32_t t, uint8_t levels[]) {
   for (uint8_t i = 0; i < NUM_CHANNELS; i++) levels[i] = g;
 }
 
+// Cat creep: one lamp slowly brightens; as it starts to fade the next one
+// begins to glow, and so on across the board. One direction, then again.
+static void animCreep(uint32_t t, uint8_t levels[]) {
+  // Position runs from one lamp before the first to one past the last,
+  // so the first lamp fades in from dark and the last fades out to dark.
+  const uint32_t span = (uint32_t)(NUM_CHANNELS + 1) * 256;
+  const uint32_t pos = (t % ANIM_CREEP_SWEEP_MS) * span / ANIM_CREEP_SWEEP_MS;
+  const uint16_t width = 256;                                 // one lamp spacing
+  for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
+    const int32_t d = (int32_t)(i + 1) * 256 - (int32_t)pos;
+    const uint32_t ad = d < 0 ? -d : d;
+    levels[i] = ad >= width ? 0 : gammaLevel(ease((width - ad) * 255 / width));
+  }
+}
+
 // Breathe: everything slowly rises and falls together.
 static void animBreathe(uint32_t t, uint8_t levels[]) {
   const uint8_t g = gammaLevel(ease(tri(t, ANIM_BREATHE_PERIOD_MS)));
@@ -118,6 +133,7 @@ static void animBreathe(uint32_t t, uint8_t levels[]) {
 
 static const Animation ANIMATIONS[] = {
   { animKitt,      6000 },
+  { animCreep,     2 * ANIM_CREEP_SWEEP_MS },
   { animBreathe,   4800 },
   { animFill,      5000 },
   { animOutsideIn, 4400 },
