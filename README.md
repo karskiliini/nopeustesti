@@ -1,0 +1,77 @@
+# Nopeustesti
+
+The classic Finnish reaction game (*Speden Spelit* style) on an Arduino
+Leonardo: four lights, four buttons, a 4-digit display and an optional
+buzzer. Lights come on in random order, faster and faster. Press the buttons
+in the order the lights came on. One wrong press, a press when nothing is
+lit, or falling five lights behind ends the game. Score is the number of
+correct presses. A good player tops out around 80–120.
+
+No libraries to install. Open `Nopeustesti.ino` in the Arduino IDE (or use
+`arduino-cli compile --fqbn arduino:avr:leonardo`) and upload.
+
+## Wiring
+
+| colour  | light pin | button pin |
+|---------|-----------|------------|
+| GREEN   | 6         | 0          |
+| YELLOW  | 13        | 1          |
+| RED     | 12        | 2          |
+| BLUE    | 7         | 3          |
+| display | CLK 9, DIO 10 (TM1637 / Grove 4-Digit Display) | |
+| buzzer  | 4 (optional, set `BUZZER_PIN` to -1 if absent) | |
+
+Buttons go between the pin and GND; the internal pull-up is used. Lights go
+pin → resistor → LED → GND, or through a transistor for real lamps (set
+`LIGHT_ACTIVE_HIGH` to false for PNP/relay boards that switch on with LOW).
+
+Everything about pins and difficulty lives in `config.h`.
+
+### Finding out which button is which
+
+Three ways, pick any:
+
+1. **Serial monitor** at 115200 baud prints the full pin map at boot.
+2. **Boot lamp test**: each lamp lights in turn while the display shows its
+   pin number (`L  6`, `L 13`, …).
+3. **Wiring test mode**: hold any button while powering up. Now every button
+   lights its own lamp while held and the display shows the button's pin
+   (`b  2`). The serial monitor also prints `button pin 2 (RED) -> light pin 12`.
+   Power-cycle to leave the mode.
+
+## Playing
+
+* **Attract**: lamps chase slowly, the display alternates the last score with
+  `bESt` and the stored high score. Press any button to start. After two idle
+  minutes everything goes dark; a press wakes it and starts a game.
+* **Countdown**: `3`, `2`, `1` with the lamps counting down, then go.
+* **Playing**: the display shows the running score. A lamp stays lit until
+  its button is pressed. If the same colour comes twice it blinks off briefly
+  so you can see the repeat.
+* **Game over**: on a wrong button, the lamp you should have pressed blinks
+  for 1.5 s. On a too-early or too-slow loss all lamps blink. Then the score
+  blinks. A new high score lights all lamps and pings on each blink. The
+  high score survives power cycles (EEPROM).
+
+## Tuning difficulty
+
+In `config.h`:
+
+* `START_INTERVAL_MS` (900): time between the first lights.
+* `SPEEDUP_FACTOR` (0.985): each light multiplies the interval by this.
+* `MIN_INTERVAL_MS` (120): the interval never goes below this.
+* `MAX_PENDING` (5): how many lit-but-unpressed lamps you may fall behind.
+
+The comment above `SPEEDUP_FACTOR` has a table of simulated scores for
+different player speeds.
+
+## Files
+
+* `Nopeustesti.ino` – game state machine (boot, wiring test, attract,
+  countdown, playing, game over).
+* `config.h` – pin map and every tunable constant.
+* `buttons.h` – polled, bounce-proof button. A press fires on the first
+  couple of low samples; release needs 30 ms of stable high, so contact
+  bounce never creates a phantom press. No interrupts, no shared lockout.
+* `display.h` – 60-line TM1637 driver (digits, a small letter font,
+  brightness, on/off).
