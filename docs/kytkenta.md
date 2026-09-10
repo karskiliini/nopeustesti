@@ -33,14 +33,24 @@ merkinnät valettu kytkimen kylkeen) ja lamppu (liittimet + ja −).
 | paikka | lamppu    | lamppu + | nappi NO | tila 10.9.2026                   |
 |--------|-----------|----------|----------|----------------------------------|
 | 1.     | vihreä    | D6       | D0 ?     | lamppu ok, nappi ei näy          |
-| 2.     | sininen   | D7 ?     | D1 ?     | lamppu ei syty, nappi ei näy     |
+| 2.     | sininen   | D5       | D1 ?     | lamppu ok, nappi ei näy          |
 | 3.     | keltainen | D13      | D2 ?     | lamppu ok, nappi ei näy          |
-| 4.     | punainen  | D12 ?    | D3 ?     | lamppu ei syty, nappi ei näy     |
+| 4.     | punainen  | D7       | D3 ?     | lamppu ok, nappi ei näy          |
 | näyttö | TM1637    | CLK D9, DIO D10, VCC 5V, GND |   |                    |
 | summeri| passiivinen | D4 / GND |        | valinnainen                      |
 
 Yhdeksän johtoa Arduinoon: 4 nappia, 4 lamppua, 1 maa. Kysymysmerkillä
-merkityt ovat config.h:n oletuksia, ei vielä mitattuja.
+merkityt ovat config.h:n oletuksia, ei vielä mitattuja. Lampun pinnit on
+mitattu 10.9.2026.
+
+Mikrokytkimen merkinnät (kuvattu 10.9.2026): COM1 alareunassa, NO3
+oikealla alhaalla (musta hyppyjohto lamppuun), NC2 oikealla ylhäällä,
+tyhjä. Lampun pinnit on
+mitattu. Summeri siirtyy pinniin 4 (config.h), koska 5 on sinisen lamppu.
+
+Mikrokytkimen merkinnät (kuvattu 10.9.2026): COM1 alareunassa, NO3
+oikealla alhaalla (musta hyppyjohto lamppuun), NC2 oikealla ylhäällä,
+tyhjä.
 
 ## Vianhaku
 
@@ -60,5 +70,5 @@ Tarkistusjärjestys:
 3. `tools/sercmd.py q 1.5` nappi pohjassa: napin pinni vaihtuu `-` → `DOWN`.
 4. Pinnit config.h:n CHANNELS-taulukkoon järjestyksessä vihreä, sininen,
    keltainen, punainen. `./flash.sh`.
-5. Sininen ja punainen lamppu: + -johto pinniin, − samaan maaketjuun.
-   Vilkutus `tools/sercmd.py 7 1`.
+5. Lamput on mitattu 10.9.2026: vihreä 6, sininen 5, keltainen 13,
+   punainen 7. Vilkutus tarvittaessa `tools/sercmd.py 7 1`.

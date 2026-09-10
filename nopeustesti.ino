@@ -548,7 +548,16 @@ void loop() {
 
   // All other phases only care whether any button was pressed.
   bool anyPress = false;
-  for (uint8_t i = 0; i < NUM_CHANNELS; i++) anyPress |= buttons[i].poll(now);
+  for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
+    if (buttons[i].poll(now)) {
+      anyPress = true;
+      Serial.print(F("press "));
+      Serial.print(CHANNELS[i].name);
+      Serial.print(F(" (pin "));
+      Serial.print(CHANNELS[i].buttonPin);
+      Serial.println(')');
+    }
+  }
 
   switch (phase) {
     case Phase::Attract:   runAttract(now, anyPress);  break;

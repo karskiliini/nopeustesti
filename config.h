@@ -45,11 +45,13 @@ struct Channel {
 //   ┌────────┬───────────┬────────────┐
 //   │ name   │ light pin │ button pin │
 //   ├────────┼───────────┼────────────┤
+// Lamp pins measured 10.9.2026 with tools/pintest. Button pins are still
+// the old defaults: no button reached any pin yet (see docs/kytkenta.md).
 static const Channel CHANNELS[] = {
     { "GREEN",  6,          0 },
-    { "YELLOW", 13,         1 },
-    { "RED",    12,         2 },
-    { "BLUE",   7,          3 },
+    { "BLUE",   5,          1 },
+    { "YELLOW", 13,         2 },
+    { "RED",    7,          3 },
 };
 //   └────────┴───────────┴────────────┘
 static const uint8_t NUM_CHANNELS = sizeof(CHANNELS) / sizeof(CHANNELS[0]);
