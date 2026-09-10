@@ -1,7 +1,7 @@
 // Wiring mapper. Serial 115200. Send "6" to blink pin 6, "s" to stop,
 // "a" to sweep all candidate pins once. Any candidate pin pulled LOW
 // (a button press) is reported.
-const uint8_t PINS[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,A0,A1,A2,A3,A4,A5};
+const uint8_t PINS[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,A0,A1,A2,A3,A4,A5};
 const uint8_t N = sizeof(PINS);
 int8_t blinkPin = -1;
 bool wasLow[N];

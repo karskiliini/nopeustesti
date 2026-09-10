@@ -35,13 +35,13 @@ time.sleep(0.3)
 if cmd:
     os.write(fd, (cmd + "\n").encode())
 end = time.time() + secs
-buf = b""
 while time.time() < end:
     r, _, _ = select.select([fd], [], [], 0.2)
     if r:
         try:
-            buf += os.read(fd, 4096)
+            chunk = os.read(fd, 4096)
         except BlockingIOError:
-            pass
+            continue
+        sys.stdout.write(chunk.decode(errors="replace"))
+        sys.stdout.flush()
 os.close(fd)
-sys.stdout.write(buf.decode(errors="replace"))
