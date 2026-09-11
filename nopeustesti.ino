@@ -19,7 +19,7 @@
  *    ATTRACT     fading lamp animations with pauses, last and best score
  *    COUNTDOWN   after a press: all lamps flash, fade out, random silence
  *    PLAYING     the game
- *    GAME OVER   flash, show score, back to ATTRACT
+ *    GAME OVER   fast soft pulses, show score, back to ATTRACT
  */
 
 #include <EEPROM.h>
@@ -550,24 +550,21 @@ static void runPlaying(uint32_t now) {
 
 static void runGameOver(uint32_t now, bool anyPress) {
   static int8_t shownBreath = -1;
-  static bool lampsOn = false;
-  if (freshPhase()) { shownBreath = -1; lampsOn = false; }
+  if (freshPhase()) shownBreath = -1;
 
   const uint32_t t = sincePhase(now);
 
   if (t < GAME_OVER_LOCKOUT_MS) {
-    // Fast flash: on a wrong button, the lamp you should have hit blinks
-    // alone; otherwise everything blinks. Presses are ignored.
-    const bool on = (t / 100) % 2 == 0;
-    if (on != lampsOn) {
-      lampsOn = on;
-      if (lossReason == LossReason::WrongButton) {
-        setAllLights(false);
-        setLight(lossExpected, on);
-      } else {
-        setAllLights(on);
-      }
+    // Fast soft pulses: on a wrong button, the lamp you should have hit
+    // pulses alone; otherwise everything pulses. In play the lamps only
+    // ever snap on and off, so a fading lamp says "game over" at once.
+    // Presses are ignored.
+    const uint8_t v = gammaLevel(ease(tri(t, GAME_OVER_PULSE_MS)));
+    uint8_t levels[NUM_CHANNELS];
+    for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
+      levels[i] = (lossReason != LossReason::WrongButton || i == lossExpected) ? v : 0;
     }
+    showLevels(levels);
     return;
   }
 
