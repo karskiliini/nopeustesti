@@ -136,7 +136,7 @@ static const uint16_t MIN_INTERVAL_MS = 120;
 
 // How many lit-but-unpressed lights the player may have queued. When a new
 // light would exceed this, the player was too slow and the game ends.
-static const uint8_t MAX_PENDING = 5;
+static const uint8_t MAX_PENDING = 8;
 
 // A lamp stays lit for this share of the current interval, then goes dark
 // whether or not it was pressed; the press is still owed. 100 would keep
@@ -155,7 +155,7 @@ static const uint16_t START_FLASH_MS = 500;      // hold at full
 static const uint16_t START_FADE_MS = 700;       // then fade to dark
 static const uint16_t START_WAIT_MIN_MS = 500;   // dark pause before the first
 static const uint16_t START_WAIT_MAX_MS = 2500;  // light, random in this range
-static const uint16_t GAME_OVER_LOCKOUT_MS = 1500; // ignore presses after loss
+static const uint16_t GAME_OVER_LOCKOUT_MS = 2500; // ignore presses after loss, let the loss sink in
 static const uint16_t GAME_OVER_PULSE_MS = 300;    // lamps pulse softly meanwhile, one up-down
 static const uint16_t GAME_OVER_BREATHE_MS = 1000; // then all lamps fade up and down
 static const uint8_t  GAME_OVER_BREATHS = 4;       // this many times, score shown
