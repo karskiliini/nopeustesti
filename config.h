@@ -138,6 +138,11 @@ static const uint16_t MIN_INTERVAL_MS = 120;
 // light would exceed this, the player was too slow and the game ends.
 static const uint8_t MAX_PENDING = 8;
 
+// The same colour may come at most this many times in a row. A longer run
+// is impossible for the player to tell apart from one long light, so the
+// next light is then drawn from the other colours.
+static const uint8_t MAX_SAME_RUN = 3;
+
 // A lamp stays lit for this share of the current interval, then goes dark
 // whether or not it was pressed; the press is still owed. 100 would keep
 // each lamp lit right up to the next one, smaller values leave a visible

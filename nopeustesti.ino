@@ -122,6 +122,8 @@ static uint8_t pending[NUM_CHANNELS];     // per colour count in the queue
 static uint32_t litUntil[NUM_CHANNELS];   // lamp goes dark at this time
 static float interval = START_INTERVAL_MS;
 static uint32_t nextLightAt = 0;
+static uint8_t lastColour = 0;
+static uint8_t sameRun = 0;               // how many times lastColour came in a row
 
 static LossReason lossReason;
 static uint8_t lossPressed = 0;
@@ -401,6 +403,7 @@ static void startGame(uint32_t now) {
   }
   interval = START_INTERVAL_MS;
   nextLightAt = now;            // the start sequence already made us wait
+  sameRun = 0;
   newBest = false;
   played = true;
   setAllLights(false);
@@ -529,7 +532,13 @@ static void runPlaying(uint32_t now) {
       loseGame(LossReason::TooSlow, 0, queue[qHead], now);
       return;
     }
-    const uint8_t colour = random(NUM_CHANNELS);
+    uint8_t colour;
+    if (sameRun >= MAX_SAME_RUN) {   // any colour but the last one
+      colour = (lastColour + 1 + random(NUM_CHANNELS - 1)) % NUM_CHANNELS;
+    } else {
+      colour = random(NUM_CHANNELS);
+    }
+    if (colour == lastColour) sameRun++; else { lastColour = colour; sameRun = 1; }
     queue[(qHead + qCount) % MAX_PENDING] = colour;
     qCount++;
     pending[colour]++;
