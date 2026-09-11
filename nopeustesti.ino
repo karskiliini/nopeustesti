@@ -555,14 +555,17 @@ static void runGameOver(uint32_t now, bool anyPress) {
   const uint32_t t = sincePhase(now);
 
   if (t < GAME_OVER_LOCKOUT_MS) {
-    // Fast soft pulses: on a wrong button, the lamp you should have hit
-    // pulses alone; otherwise everything pulses. In play the lamps only
-    // ever snap on and off, so a fading lamp says "game over" at once.
-    // Presses are ignored.
+    // Every lamp pulses softly; in play the lamps only ever snap on and
+    // off, so this says "game over" at once. On a wrong or too early press
+    // the lamp of the button that was pressed snaps hard on and off on top
+    // of that, so the player sees which press ended the game. Presses are
+    // ignored.
     const uint8_t v = gammaLevel(ease(tri(t, GAME_OVER_PULSE_MS)));
+    const bool snap = (t / GAME_OVER_FLASH_MS) % 2 == 0;
     uint8_t levels[NUM_CHANNELS];
     for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
-      levels[i] = (lossReason != LossReason::WrongButton || i == lossExpected) ? v : 0;
+      const bool culprit = lossReason != LossReason::TooSlow && i == lossPressed;
+      levels[i] = culprit ? (snap ? 255 : 0) : v;
     }
     showLevels(levels);
     return;
