@@ -488,7 +488,8 @@ static void loseGame(LossReason reason, uint8_t pressed, uint8_t expected, uint3
   Serial.print(F(" best="));
   Serial.print(best);
   if (newBest) Serial.print(F(" NEW BEST"));
-  Serial.println();
+  Serial.print(F(" t="));
+  Serial.println(now);
 
   beep(110, 700);
   display.showNumber(score);
@@ -523,7 +524,9 @@ static void runPlaying(uint32_t now) {
     score++;
     display.showNumber(score);
     Serial.print(F("ok "));
-    Serial.println(CHANNELS[i].name);
+    Serial.print(CHANNELS[i].name);
+    Serial.print(' ');
+    Serial.println(now);
   }
 
   // Next light
@@ -548,6 +551,10 @@ static void runPlaying(uint32_t now) {
     uint32_t onMs = (uint32_t)interval * LIGHT_ON_PERCENT / 100;
     if (onMs < LIGHT_ON_MIN_MS) onMs = LIGHT_ON_MIN_MS;
     litUntil[colour] = now + onMs;
+    Serial.print(F("lit "));
+    Serial.print(CHANNELS[colour].name);
+    Serial.print(' ');
+    Serial.println(now);
   }
 
   refreshLamps(now);
