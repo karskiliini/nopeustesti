@@ -104,10 +104,13 @@ static const bool BUZZER_PASSIVE = true;
 // 2 samples = ~2 ms latency and immune to single-sample glitches.
 static const uint8_t PRESS_CONFIRM_SAMPLES = 2;
 
-// A button counts as released only after it has read "released" continuously for
-// this long. This swallows release bounce completely, so holding a button
-// and letting go never produces a phantom press.
-static const uint16_t RELEASE_STABLE_MS = 30;
+// A button counts as released only after it has read "released" continuously
+// for this long. This swallows release bounce and plunger rebound, so one
+// physical press never produces a second one. The arcade buttons were seen
+// to reopen for 30-80 ms in the middle of a quick tap (log 12.9.2026), so
+// this must be clearly above that. Nobody re-presses the same button
+// within 100 ms on purpose.
+static const uint16_t RELEASE_STABLE_MS = 100;
 
 // ---------------------------------------------------------------------------
 // Game tuning
