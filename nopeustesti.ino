@@ -120,6 +120,7 @@ static uint8_t qHead = 0;
 static uint8_t qCount = 0;
 static uint8_t pending[NUM_CHANNELS];     // per colour count in the queue
 static uint32_t litUntil[NUM_CHANNELS];   // lamp goes dark at this time
+static uint32_t blankUntil[NUM_CHANNELS]; // lamp stays dark until this time (press acknowledged)
 static float interval = START_INTERVAL_MS;
 static uint32_t nextLightAt = 0;
 static uint8_t lastColour = 0;
@@ -400,6 +401,7 @@ static void startGame(uint32_t now) {
   for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
     pending[i] = 0;
     litUntil[i] = now;
+    blankUntil[i] = now;
   }
   interval = START_INTERVAL_MS;
   nextLightAt = now;            // the start sequence already made us wait
@@ -496,9 +498,16 @@ static void loseGame(LossReason reason, uint8_t pressed, uint8_t expected, uint3
   enterPhase(Phase::GameOver, now);
 }
 
+// How long a lamp stays lit at the current pace.
+static uint32_t lightOnMs() {
+  uint32_t onMs = (uint32_t)interval * LIGHT_ON_PERCENT / 100;
+  if (onMs < LIGHT_ON_MIN_MS) onMs = LIGHT_ON_MIN_MS;
+  return onMs;
+}
+
 static void refreshLamps(uint32_t now) {
   for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
-    setLight(i, pending[i] > 0 && !reached(now, litUntil[i]));
+    setLight(i, pending[i] > 0 && reached(now, blankUntil[i]) && !reached(now, litUntil[i]));
   }
 }
 
@@ -520,7 +529,15 @@ static void runPlaying(uint32_t now) {
     }
     qHead = (qHead + 1) % MAX_PENDING;
     qCount--;
-    if (--pending[i] == 0) litUntil[i] = now;   // lamp off on the press
+    // Acknowledge: lamp off on the press. If the same colour is still owed,
+    // it comes back on after the blank for a full light time.
+    blankUntil[i] = now + PRESS_ACK_BLANK_MS;
+    if (--pending[i] == 0) {
+      litUntil[i] = now;
+    } else {
+      const uint32_t relitUntil = blankUntil[i] + lightOnMs();
+      if (reached(relitUntil, litUntil[i])) litUntil[i] = relitUntil;
+    }
     score++;
     display.showNumber(score);
     Serial.print(F("ok "));
@@ -548,9 +565,7 @@ static void runPlaying(uint32_t now) {
     interval *= SPEEDUP_FACTOR;
     if (interval < MIN_INTERVAL_MS) interval = MIN_INTERVAL_MS;
     nextLightAt = now + (uint32_t)interval;
-    uint32_t onMs = (uint32_t)interval * LIGHT_ON_PERCENT / 100;
-    if (onMs < LIGHT_ON_MIN_MS) onMs = LIGHT_ON_MIN_MS;
-    litUntil[colour] = now + onMs;
+    litUntil[colour] = now + lightOnMs();
     Serial.print(F("lit "));
     Serial.print(CHANNELS[colour].name);
     Serial.print(' ');
