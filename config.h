@@ -163,8 +163,13 @@ static const uint16_t START_FLASH_MS = 500;      // hold at full
 static const uint16_t START_FADE_MS = 700;       // then fade to dark
 static const uint16_t START_WAIT_MIN_MS = 500;   // dark pause before the first
 static const uint16_t START_WAIT_MAX_MS = 2500;  // light, random in this range
-static const uint16_t GAME_OVER_LOCKOUT_MS = 2500; // ignore presses after loss, let the loss sink in
-static const uint16_t GAME_OVER_PULSE_MS = 300;    // lamps pulse softly meanwhile, one up-down
+// Game over, presses ignored meanwhile: first every lamp pulses softly
+// GAME_OVER_ALL_PULSES times, then the lamp that should have been pressed
+// pulses alone GAME_OVER_LAMP_PULSES times (skipped when there was no
+// such lamp, i.e. a press with nothing lit). One pulse = up and down.
+static const uint16_t GAME_OVER_PULSE_MS = 300;
+static const uint8_t  GAME_OVER_ALL_PULSES = 4;
+static const uint8_t  GAME_OVER_LAMP_PULSES = 8;
 static const uint16_t GAME_OVER_BREATHE_MS = 1000; // then all lamps fade up and down
 static const uint8_t  GAME_OVER_BREATHS = 4;       // this many times, score shown
 static const uint16_t ATTRACT_PAUSE_MS = 1000;   // dark gap between animations

@@ -570,15 +570,18 @@ static void runGameOver(uint32_t now, bool anyPress) {
 
   const uint32_t t = sincePhase(now);
 
-  if (t < GAME_OVER_LOCKOUT_MS) {
-    // Fast soft pulses: on a wrong button, the lamp you should have hit
-    // pulses alone; otherwise everything pulses. In play the lamps only
-    // ever snap on and off, so a fading lamp says "game over" at once.
-    // Presses are ignored.
+  // In play the lamps only ever snap on and off, so soft pulses say "game
+  // over" at once: first every lamp, then the one that should have been
+  // pressed, alone. Presses are ignored meanwhile.
+  const bool haveExpected = lossReason != LossReason::TooEarly;
+  const uint32_t allMs = (uint32_t)GAME_OVER_ALL_PULSES * GAME_OVER_PULSE_MS;
+  const uint32_t lampMs = haveExpected ? (uint32_t)GAME_OVER_LAMP_PULSES * GAME_OVER_PULSE_MS : 0;
+  const uint32_t lockoutMs = allMs + lampMs;
+  if (t < lockoutMs) {
     const uint8_t v = gammaLevel(ease(tri(t, GAME_OVER_PULSE_MS)));
     uint8_t levels[NUM_CHANNELS];
     for (uint8_t i = 0; i < NUM_CHANNELS; i++) {
-      levels[i] = (lossReason != LossReason::WrongButton || i == lossExpected) ? v : 0;
+      levels[i] = (t < allMs || i == lossExpected) ? v : 0;
     }
     showLevels(levels);
     return;
@@ -587,7 +590,7 @@ static void runGameOver(uint32_t now, bool anyPress) {
   // Show the score while every lamp breathes up and down a few times; a
   // new best gets a rising ping at the start of each breath. Then hand
   // over to the attract show, whose own dark pause comes first.
-  const uint32_t bt = t - GAME_OVER_LOCKOUT_MS;
+  const uint32_t bt = t - lockoutMs;
   const int8_t breath = bt / GAME_OVER_BREATHE_MS;
   if (breath != shownBreath) {
     shownBreath = breath;
