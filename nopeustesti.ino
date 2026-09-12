@@ -549,13 +549,19 @@ static void runPlaying(uint32_t now) {
       loseGame(LossReason::TooSlow, 0, queue[qHead], now);
       return;
     }
+    // The last colour again with probability 1 / (NUM_CHANNELS << sameRun),
+    // i.e. halved for every time it has already come in a row; otherwise
+    // one of the other colours, evenly.
     uint8_t colour;
-    if (sameRun >= MAX_SAME_RUN) {   // any colour but the last one
+    const uint8_t shift = sameRun < SAME_RUN_SHIFT_MAX ? sameRun : SAME_RUN_SHIFT_MAX;
+    if (sameRun > 0 && random((long)NUM_CHANNELS << shift) == 0) {
+      colour = lastColour;
+    } else if (sameRun > 0) {
       colour = (lastColour + 1 + random(NUM_CHANNELS - 1)) % NUM_CHANNELS;
     } else {
-      colour = random(NUM_CHANNELS);
+      colour = random(NUM_CHANNELS);   // first light of the game
     }
-    if (colour == lastColour) sameRun++; else { lastColour = colour; sameRun = 1; }
+    if (colour == lastColour && sameRun > 0) sameRun++; else { lastColour = colour; sameRun = 1; }
     queue[(qHead + qCount) % MAX_PENDING] = colour;
     qCount++;
     pending[colour]++;
