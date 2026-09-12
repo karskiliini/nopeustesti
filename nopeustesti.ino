@@ -549,12 +549,12 @@ static void runPlaying(uint32_t now) {
       loseGame(LossReason::TooSlow, 0, queue[qHead], now);
       return;
     }
-    // The last colour again with probability 1 / (NUM_CHANNELS << sameRun),
-    // i.e. halved for every time it has already come in a row; otherwise
-    // one of the other colours, evenly.
+    // The last colour again with the chance SAME_AGAIN_PERCENT gives for
+    // the current run length; otherwise one of the other colours, evenly.
     uint8_t colour;
-    const uint8_t shift = sameRun < SAME_RUN_SHIFT_MAX ? sameRun : SAME_RUN_SHIFT_MAX;
-    if (sameRun > 0 && random((long)NUM_CHANNELS << shift) == 0) {
+    const uint8_t tableLen = sizeof(SAME_AGAIN_PERCENT) / sizeof(SAME_AGAIN_PERCENT[0]);
+    const uint8_t idx = sameRun < tableLen ? sameRun - 1 : tableLen - 1;
+    if (sameRun > 0 && random(100) < SAME_AGAIN_PERCENT[idx]) {
       colour = lastColour;
     } else if (sameRun > 0) {
       colour = (lastColour + 1 + random(NUM_CHANNELS - 1)) % NUM_CHANNELS;

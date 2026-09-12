@@ -141,11 +141,11 @@ static const uint16_t MIN_INTERVAL_MS = 120;
 // light would exceed this, the player was too slow and the game ends.
 static const uint8_t MAX_PENDING = 8;
 
-// Repeats of the same colour are rare but possible: after a colour has
-// come once its chance of coming again right away is 1/8 (with four
-// lamps), after twice in a row 1/16, then 1/32 and so on. The other
-// colours share the rest equally.
-static const uint8_t SAME_RUN_SHIFT_MAX = 12;   // caps the halving at 1/(lamps * 4096)
+// Repeats of the same colour are rare but possible. After a colour has
+// come n times in a row, the chance (in percent) that it comes again
+// right away is SAME_AGAIN_PERCENT[n-1]; past the end of the table the
+// last value holds. The other colours share the rest evenly.
+static const uint8_t SAME_AGAIN_PERCENT[] = { 13, 10, 8, 6, 5, 4, 3, 2 };
 
 // A lamp stays lit for this share of the current interval, then goes dark
 // whether or not it was pressed; the press is still owed. 100 would keep
