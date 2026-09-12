@@ -529,15 +529,12 @@ static void runPlaying(uint32_t now) {
     }
     qHead = (qHead + 1) % MAX_PENDING;
     qCount--;
-    // Acknowledge: lamp off on the press. If the same colour is still owed,
-    // it comes back on after the blank for a full light time.
+    // Acknowledge: lamp off on the press. It comes back only if its own
+    // light time is still running (the colour came again and that copy is
+    // still lit); it is never relit or extended, since a lamp lighting
+    // after a later colour would read as a new light in the wrong place.
     blankUntil[i] = now + PRESS_ACK_BLANK_MS;
-    if (--pending[i] == 0) {
-      litUntil[i] = now;
-    } else {
-      const uint32_t relitUntil = blankUntil[i] + lightOnMs();
-      if (reached(relitUntil, litUntil[i])) litUntil[i] = relitUntil;
-    }
+    if (--pending[i] == 0) litUntil[i] = now;
     score++;
     display.showNumber(score);
     Serial.print(F("ok "));

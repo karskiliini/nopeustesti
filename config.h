@@ -153,10 +153,10 @@ static const uint8_t MAX_SAME_RUN = 3;
 static const uint8_t LIGHT_ON_PERCENT = 60;
 static const uint16_t LIGHT_ON_MIN_MS = 60;
 
-// Every accepted press blanks its lamp for this long. If the same colour
-// is still owed after that (it came twice or more in a row), the lamp
-// comes back on for a full light time, so the player sees both that the
-// press registered and that one more is due.
+// Every accepted press blanks its lamp for this long, so the player sees
+// the press registered. The lamp then comes back only if its own light
+// time is still running (the same colour came again and that copy is
+// still lit); it is never relit later, which would break the order.
 static const uint16_t PRESS_ACK_BLANK_MS = 80;
 
 // ---------------------------------------------------------------------------
